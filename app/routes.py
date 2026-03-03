@@ -33,6 +33,7 @@ def submit() -> Response:
         with open(BASE_DIR / "submission" / "dictionary.h", "w") as f:
             f.write(header)
     else:
+        # if no dictionary.h submitted, use the distribution code version
         shutil.copy(
             BASE_DIR / "submission" / "distribution_dictionary.h",
             BASE_DIR / "submission" / "dictionary.h"

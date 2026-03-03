@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bigboard - CS50x Speller Benchmark</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <h1>Bigboard - CS50x Speller Benchmark</h1>
+    <div id="use-dist-container">
+        <label id="use-dist-label">
+            <input type="checkbox" id="use-dist-checkbox" checked>
+            Use distribution <code>dictionary.h</code>
+        </label>
+    </div>
     <form id="submit-form">
-        <div id="form-top-row">
-            <label id="use-dist-label">
-                <input type="checkbox" id="use-dist-checkbox" checked>
-                Use distribution <code>dictionary.h</code>
-            </label>
-        </div>
         <div id="textareas-container">
             <div class="textarea-group">
                 <label for="code-input">Paste your <code>dictionary.c</code> below:</label>
                 <textarea id="code-input" name="code" placeholder="// your dictionary.c here..."></textarea>
             </div>
+            <div id="textarea-divider" hidden></div>
             <div class="textarea-group" id="header-group" hidden>
                 <label for="header-input">Paste your <code>dictionary.h</code> below:</label>
                 <textarea id="header-input" name="header" placeholder="// your dictionary.h here..."></textarea>
@@ -34,4 +37,5 @@
 
     <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
+
 </html>
