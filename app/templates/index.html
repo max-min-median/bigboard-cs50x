@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>bigboard-cs50x</title>
-
+    <title>Bigboard - CS50x Speller Benchmark</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-    <body>
-        Welcome to your new project, bigboard-cs50x!
-    </body>
+<body>
+    <h1>Bigboard - CS50x Speller Benchmark</h1>
+    <form id="submit-form">
+        <label for="code-input">Paste your <code>dictionary.c</code> below:</label>
+        <textarea id="code-input" name="code" placeholder="// your dictionary.c here..."></textarea>
+        <button type="submit" id="submit-btn" disabled>Submit</button>
+    </form>
+
+    <div id="output-area">
+        <pre id="output"></pre>
+    </div>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
 </html>

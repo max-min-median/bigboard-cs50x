@@ -1,8 +1,12 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
+import colorlog
 from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+
 
 db = SQLAlchemy()
 load_dotenv()
@@ -19,10 +23,6 @@ def create_app():
     app.register_blueprint(main)
     
     return app
-
-import logging
-from logging.handlers import RotatingFileHandler
-import colorlog
 
 def setup_logging(app: Flask):
     # Colored console handler
