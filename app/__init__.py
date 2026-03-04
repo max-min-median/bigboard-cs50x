@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 load_dotenv()
 
-def create_app():
+def create_app() -> Flask:
     app = Flask(__name__)
 
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
@@ -27,7 +27,8 @@ def create_app():
 
     return app
 
-def setup_logging(app: Flask):
+
+def setup_logging() -> None:
     # Colored console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)

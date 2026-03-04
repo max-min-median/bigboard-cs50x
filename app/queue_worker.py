@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import threading
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from time import time_ns
 
@@ -67,7 +67,7 @@ def queue_length() -> int:
         return len(_pending)
 
 
-def _run_benchmark_container(item: QueueItem):
+def _run_benchmark_container(item: QueueItem) -> None:
     """
     Write submission contents to files where they will be accessible to a docker container and
     spin up the container. Remove item from q
@@ -138,7 +138,7 @@ def _run_benchmark_container(item: QueueItem):
             _pending.remove(item)
 
 
-def _queue_worker():
+def _queue_worker() -> None:
     """
     This will loop over and over, sleeping efficiently until _wake_worker_event is triggered,
     at which point it will process all the items in the _pending queue.
@@ -156,7 +156,7 @@ def _queue_worker():
             _run_benchmark_container(item)
 
 
-def start_worker():
+def start_worker() -> None:
     t = threading.Thread(target=_queue_worker, daemon=True, name="queue-worker")
     log.info("Starting queue worker thread")
     t.start()
