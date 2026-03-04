@@ -83,7 +83,7 @@ def _run_benchmark_container(item: QueueItem) -> None:
     else:
         # if no dictionary.h submitted, use the distribution code version
         shutil.copy(
-            BASE_DIR / "submission" / "distribution_dictionary.h",
+            BASE_DIR / "speller" / "distribution_dictionary.h",
             BASE_DIR / "submission" / "dictionary.h"
         )
 
@@ -97,7 +97,7 @@ def _run_benchmark_container(item: QueueItem) -> None:
     # --pids-limit 50           max number of processes/threads (prevents fork bombs)
     # --security-opt ...        prevent processes from gaining new privileges via setuid
     # --ulimit fsize=...        cap any single file write to a max size
-    # -v speller:/speller:rw    mount distribution code read-write (compiled output lands here)
+    # -v speller:/speller:ro    mount distribution code read-write (compiled output lands here)
     # -v submission:...  :ro    mount student submission files as read-only
 
     # TODO better to externalize resource limits and docker settings to .env file
@@ -114,7 +114,7 @@ def _run_benchmark_container(item: QueueItem) -> None:
                 "--security-opt", "no-new-privileges",
                 "--ulimit", "fsize=26214400",
                 "-v", f"{BASE_DIR / 'speller'}:/speller:rw",
-                "-v", f"{BASE_DIR / 'submission'}:/submission:ro",
+                "-v", f"{BASE_DIR / 'submission'}:/submission:rw",
                 "bigboard-sandbox",
             ],
             capture_output=True,

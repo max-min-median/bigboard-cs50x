@@ -7,6 +7,7 @@ __pycache__/
 
 # don't commit secret key or db login info
 .env
+.venv/
 
 # package metadata
 *.egg-info
@@ -14,5 +15,4 @@ __pycache__/
 # Don't commit CS50x/speller distribution code, it can be obtained from CS50
 # Also don't student submissions dir
 speller.zip
-speller/
 submission/
