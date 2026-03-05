@@ -3,12 +3,11 @@ import subprocess
 import threading
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
 from time import time_ns
 
+from .config import *
 from .container import spin_container
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class QueueItem:
     timestamp: int                  # Unix timestamp
     code: str                       # contents of submission's dictionary.c
     header: str                     # contents of submission's dictionary.h (blank if using distribution)
-    status: str = "pending"         # pending | running | done | error
+    status: str = "pending"         # pending | compiling | running | done | error
     output: str = ""                # output for webpage's "terminal"
 
 _pending: list[QueueItem] = []
@@ -59,6 +58,8 @@ def get_status(submission_id: str) -> dict | None:
             return {"status": "pending", "position": position}
         elif item.status == "running":
             return {"status": "running"}
+        elif item.status == "compiling":
+            return {"status": "compiling"}
         else:
             return {"status": item.status, "output": item.output}
 
@@ -76,10 +77,10 @@ def _run_benchmark_container(item: QueueItem) -> None:
     log.info("Submission %s starting docker container", item.submission_id)
 
     # write/symlink submission code
-    with open(BASE_DIR / "speller_workspace" / "_dictionary.c", "w") as f:
+    with open(BASE_DIR / SPELLER_WS / "_dictionary.c", "w") as f:
         f.write(item.code)
 
-    header_file = BASE_DIR / "speller_workspace" / "_dictionary.h"
+    header_file = BASE_DIR / SPELLER_WS / "_dictionary.h"
     header_file.unlink(missing_ok=True)
     if item.header:
         with open(header_file, "w") as f:
@@ -87,14 +88,27 @@ def _run_benchmark_container(item: QueueItem) -> None:
     else:
         # if no dictionary.h submitted, use the distribution code version
         # symlink relative to container's filesystem
-        header_file.symlink_to("/speller_workspace/distribution_dictionary.h")
+        header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h")
 
     # Spin up a docker container to compile and run the student's submission.
     try:
-        result = spin_container()
+        # compilation step
+        result = spin_container(speller_perms="rw", mount_workspace=True, flags=["--compile-submission"])
         output = result.stdout + result.stderr
-        status = "done"
-        log.info("Submission %s finished, exit code: %s", item.submission_id, result.returncode)
+        if result.returncode != 0:
+            status = "error"
+        else:
+            log.debug("Submission %s finished compiling, exit code: %s", item.submission_id, result.returncode)
+            with _lock:
+                item.status = "running"
+            
+            # execution step
+            # TODO this command is a placeholder, we'll clean it up when we figure out actual benchmark
+            result = spin_container(parameters=["-c", f"cd /{SPELLER} && ./speller 5 texts/holmes.txt && echo 'Benchmark:' && ./benchmark 5 texts/holmes.txt"])
+            output = output + "\n" + result.stdout + result.stderr
+            status = "done"
+
+            log.debug("Submission %s finished benchmark, exit code: %s", item.submission_id, result.returncode)
     except subprocess.TimeoutExpired:
         output = "Error: execution timed out."
         status = "error"
@@ -122,7 +136,7 @@ def _queue_worker() -> None:
                     _wake_worker_event.clear()
                     break
                 item = _pending[0]
-                item.status = "running"
+                item.status = "compiling"
 
             _run_benchmark_container(item)
 

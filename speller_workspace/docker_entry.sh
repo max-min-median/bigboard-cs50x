@@ -3,8 +3,8 @@
 set -e
 
 # dir names
-SPELLER=speller
-SPELLER_WORKSPACE=speller_workspace
+# SPELLER=speller
+# SPELLER_WS=speller_workspace
 
 SPELLER_C_FILENAME=speller2.c
 DICTIONARY_H_FILENAME=distribution_dictionary.h
@@ -16,15 +16,15 @@ BENCHMARK_EXECUTABLE=benchmark
 
 if [ "$1" = "--initialize" ]; then
     # symbolic links to ephemeral student submission files in /speller_workspace
-    ln -sf "/$SPELLER_WORKSPACE/_dictionary.c" "/$SPELLER/dictionary.c"
-    ln -sf "/$SPELLER_WORKSPACE/_dictionary.h" "/$SPELLER/dictionary.h"
+    ln -sf "/$SPELLER_WS/_dictionary.c" "/$SPELLER/dictionary.c"
+    ln -sf "/$SPELLER_WS/_dictionary.h" "/$SPELLER/dictionary.h"
     
     # symbolic link to version of speller.c we will be using
-    ln -sf "/$SPELLER_WORKSPACE/$SPELLER_C_FILENAME" "/$SPELLER/speller.c"
+    ln -sf "/$SPELLER_WS/$SPELLER_C_FILENAME" "/$SPELLER/speller.c"
 
     # compile benchmark version of dictionary.c -- we only need to do this once at initialization
-    ln -sf "/$SPELLER_WORKSPACE/$DICTIONARY_H_FILENAME" "/$SPELLER_WORKSPACE/_dictionary.h"
-    ln -sf "/$SPELLER_WORKSPACE/$DICTIONARY_C_BENCHMARK_FILENAME" "/$SPELLER/$DICTIONARY_C_BENCHMARK_FILENAME"
+    ln -sf "/$SPELLER_WS/$DICTIONARY_H_FILENAME" "/$SPELLER_WS/_dictionary.h"
+    ln -sf "/$SPELLER_WS/$DICTIONARY_C_BENCHMARK_FILENAME" "/$SPELLER/$DICTIONARY_C_BENCHMARK_FILENAME"
 
     cd "/$SPELLER"
 
@@ -45,14 +45,13 @@ if [ "$1" = "--initialize" ]; then
             $BENCHMARK_EXECUTABLE benchmark_dictionary.o speller.o -lm
 
     echo "Success: initialized symbolic links and compiled benchmark executable"
-else
+elif [ "$1" = "--compile-submission" ]; then
     cd /"$SPELLER"
 
     # Use CS50 Makefile, but make sure everything is recompiled for each submission
     make -B
-
-    ./speller 5 texts/holmes.txt
-
-    echo "Benchmark:"
-    ./$BENCHMARK_EXECUTABLE 5 texts/holmes.txt
 fi
+#     ./speller 5 texts/holmes.txt
+
+#     echo "Benchmark:"
+#     ./$BENCHMARK_EXECUTABLE 5 texts/holmes.txt

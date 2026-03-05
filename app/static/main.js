@@ -107,6 +107,8 @@ submitForm.addEventListener('submit', async function(e) {
 
             if (data.status === 'pending') {
                 queueStatus.textContent = `${data.position} submission(s) ahead of you...`;
+            } else if (data.status === 'compiling') {
+                queueStatus.textContent = 'Compiling code...';
             } else if (data.status === 'running') {
                 queueStatus.textContent = 'Running benchmarks...';
             } else if (data.status === 'done' || data.status === 'error') {

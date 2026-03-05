@@ -1,12 +1,32 @@
-from logging import getLogger
+import logging
+import os
 from pathlib import Path
 import subprocess
+from time import perf_counter
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+from .config import *
 
-log = getLogger(__name__)
+CONTAINER_IMAGE_NAME = os.environ["CONTAINER_IMAGE_NAME"]
+CONTAINER_SCRIPT = os.getenv("CONTAINER_SCRIPT", "docker_entry.sh")
+CONTAINER_MEM = os.getenv("CONTAINER_MEM", "256m")
+CONTAINER_CPUS = os.getenv("CONTAINER_CPUS", "0.5")
+CONTAINER_PID_LIMIT = os.getenv("CONTAINER_PID_LIMIT", "50")
+CONTAINER_FSIZE_LIMIT = os.getenv("CONTAINER_FSIZE_LIMIT", "fsize=26214400")
+CONTAINER_TIMEOUT = int( os.getenv("CONTAINER_TIMEOUT", "20") )
 
-def spin_container(workspace_perm="ro", extra_flags=[]) -> subprocess.CompletedProcess:
+log = logging.getLogger(__name__)
+
+
+def spin_container(
+        speller_perms="ro",
+        mount_workspace=False,
+        entrypoint="sh",
+        parameters=[str(Path("/") / SPELLER_WS / CONTAINER_SCRIPT)],
+        flags=[]
+    ) -> subprocess.CompletedProcess:
+    start_t = perf_counter()
+    log.debug("spinup: %s %s %s", entrypoint, parameters, flags)
+
     # --rm                      remove the container automatically after it exits
     # --network none            no network access from inside the container
     # --memory 256m             hard memory cap
@@ -18,24 +38,27 @@ def spin_container(workspace_perm="ro", extra_flags=[]) -> subprocess.CompletedP
     # -v speller:/speller:rw    mount distribution code read-write (compiled output lands here)
     # -v submission:...  :ro    mount student submission files as read-only
 
-    # TODO better to externalize resource limits and docker settings to .env file
+    mounts = [ "-v", f"{BASE_DIR / SPELLER}:/{SPELLER}:{speller_perms}" ]
+    if mount_workspace:
+        mounts.extend([ "-v", f"{BASE_DIR / SPELLER_WS}:/{SPELLER_WS}:rw" ])
+
     command = [
         "docker", "run", "--rm",
+        "-e", f"SPELLER={SPELLER}",
+        "-e", f"SPELLER_WS={SPELLER_WS}",
         "--network", "none",
-        "--memory", "256m",
-        "--cpus", "0.5",
+        "--memory", CONTAINER_MEM,
+        "--cpus", CONTAINER_CPUS,
         "--cap-drop", "ALL",
-        "--pids-limit", "50",
+        "--pids-limit", CONTAINER_PID_LIMIT,
         "--security-opt", "no-new-privileges",
-        "--ulimit", "fsize=26214400",
-        "-v", f"{BASE_DIR / 'speller'}:/speller:rw",
-        "-v", f"{BASE_DIR / 'speller_workspace'}:/speller_workspace:{workspace_perm}",
-        "--entrypoint", "sh",
-        "bigboard-sandbox", "/speller_workspace/docker_entry.sh"
-    ] + extra_flags
+        "--ulimit", CONTAINER_FSIZE_LIMIT,
+    ] + mounts + [
+        "--entrypoint", entrypoint,
+        CONTAINER_IMAGE_NAME,
+    ] + parameters + flags
 
-    return subprocess.run(command,
-        capture_output=True,
-        text=True,
-        timeout=20,
-    )
+    result = subprocess.run(command, capture_output=True, text=True, timeout=CONTAINER_TIMEOUT)
+    log.debug("spindown: %.3fs. Return Code: %d", perf_counter() - start_t, result.returncode)
+
+    return result
