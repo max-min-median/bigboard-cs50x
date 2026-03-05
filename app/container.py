@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import subprocess
 from time import perf_counter
+from typing import Literal
 
 from .config import *
 
@@ -18,11 +19,11 @@ log = logging.getLogger(__name__)
 
 
 def spin_container(
-        speller_perms="ro",
-        mount_workspace=False,
-        entrypoint="sh",
-        parameters=[str(Path("/") / SPELLER_WS / CONTAINER_SCRIPT)],
-        flags=[]
+        speller_perms: Literal["ro", "rw"] = "ro",
+        mount_workspace: bool = False,
+        entrypoint: str = "sh",
+        parameters: list[str] = [str(Path("/") / SPELLER_WS / CONTAINER_SCRIPT)],
+        flags: list[str] = []
     ) -> subprocess.CompletedProcess:
     start_t = perf_counter()
     log.debug("spinup: %s %s %s", entrypoint, parameters, flags)

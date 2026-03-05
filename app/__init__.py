@@ -22,6 +22,7 @@ def create_app() -> Flask:
 
     app.config["SECRET_KEY"] = os.environ["SECRET_KEY"]
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_CONTENT_LENGTH", "32768"))
     db.init_app(app)
 
     app.register_blueprint(main)

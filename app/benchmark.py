@@ -52,7 +52,7 @@ def _compile_submission(item: QueueItem) -> BenchmarkResult:
         return BenchmarkResult(status=status, output=output)
     except subprocess.TimeoutExpired:
         log.warning("Submission %s compilation timed out", item.submission_id)
-        return BenchmarkResult(status="error", output=output)
+        return BenchmarkResult(status="error", output="Error: compilation timed out")
 
 
 def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
