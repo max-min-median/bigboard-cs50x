@@ -14,12 +14,15 @@
 // Undefine any definitions
 #undef calculate
 
+// filename
+#define SPELLER "speller4"
+
 // Define useful macros
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define TIMER(str) do {clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp_##str);} while(0)
 #define TIME(process, instructions) TIMER(start); instructions TIMER(end); CALCTIME(process);
 #define CALCTIME(str) do {double tm = calculate(&tp_start, &tp_end); time_##str += tm; time_##str##_min = MIN(time_##str##_min, tm);} while(0)
-#define USAGE "[ERROR] Usage: ./speller2 [-i num] [-d dict] [-s signature] text\n" 
+#define USAGE "[ERROR] Usage: ./"SPELLER" [-i num] [-d dict] [-s signature] texts...\n" 
 
 // Default dictionary
 #define DICTIONARY "dictionaries/large"

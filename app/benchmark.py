@@ -68,15 +68,14 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
         textpaths = ['texts/' + textpath.name for textpath in (BASE_DIR / SPELLER / 'texts').iterdir()]
 
         sh_cmds += (f"./{cmd} -i {ITERATIONS} -s {signature} {textpath}" for textpath in textpaths for cmd in ["speller", BENCHMARK_EXECUTABLE])
+        # sh_cmds += ("./speller texts/holmes.txt" for _ in range(100))  # 53s
+        # sh_cmds += ["./speller -i 100 texts/holmes.txt"]  # 17s
 
-        import time
-        start_time = time.time()
         result = spin_container(parameters=["-c",
             " && ".join(sh_cmds)
         ])
 
-        total_time = time.time() - start_time
-        output = result.stdout + result.stderr + f"\nContainer finished task in {total_time} s."
+        output = result.stdout + result.stderr
 
         # TODO return different statuses
         status = "done"
