@@ -15,30 +15,30 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "dictionary.h"
+#include "benchmark_dictionary.h"
 
-unsigned int mmap_len;
+static unsigned int mmap_len;
 
-unsigned int dictSize = 1;
+static unsigned int dictSize = 1;
 
 // Represents number of buckets in a hash table
-#define N 524289
+#define BENCH_N 524289
 
 // assumed words in dict
 #define DICT_SIZE 143093
 
 // Represents a hash table
-// unsigned int table[N];
+// unsigned int table[BENCH_N];
 
 // buffer to hold dictionary
-char *buf;
+static char *buf;
 
 // node pool
-unsigned int *pool;
+static unsigned int *pool;
 
 // CHANGE HASH IN CHECK TOO
 // Hashes word to a number
-__attribute__((always_inline)) unsigned int hash(const char *s)
+static __attribute__((always_inline)) unsigned int hash_BENCH(const char *s)
 {
     unsigned int h = 2166136261;
     int c;
@@ -51,7 +51,7 @@ __attribute__((always_inline)) unsigned int hash(const char *s)
 }
 
 // Loads dictionary into memory, returning true if successful else false
-bool load(const char *dictionary)
+static bool load_BENCH(const char *dictionary)
 {
     // Open dictionary
     int fd = open(dictionary, O_RDONLY);
@@ -66,7 +66,7 @@ bool load(const char *dictionary)
     unsigned int size = st.st_size;
 
     // alignment requirement
-    mmap_len = size + 1 + (4 - (size + 1) % 4) + (N + 1) * sizeof(unsigned int);
+    mmap_len = size + 1 + (4 - (size + 1) % 4) + (BENCH_N + 1) * sizeof(unsigned int);
 
     // initialise buffer
     buf = mmap(NULL, mmap_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_POPULATE, -1, 0);
@@ -80,9 +80,9 @@ bool load(const char *dictionary)
 
     while (*word)
     {
-        char *tmp = memchr(word, '\n', LENGTH + 1);
+        char *tmp = memchr(word, '\n', LENGTH_B + 1);
         *tmp = '\0';
-        unsigned int hash_val = hash(word);
+        unsigned int hash_val = hash_BENCH(word);
 
         while (pool[hash_val] != 0)
         {
@@ -98,15 +98,15 @@ bool load(const char *dictionary)
 }
 
 // Returns number of words in dictionary if loaded else 0 if not yet loaded
-unsigned int size(void)
+static unsigned int size_BENCH(void)
 {
     return dictSize - 1;
 }
 
 // Returns true if word is in dictionary else false
-bool check(const char *word)
+bool check_BENCH(const char *word)
 {
-    char lower_word[LENGTH + 1];
+    char lower_word[LENGTH_B + 1];
 
     // lowercase word
     unsigned int i = 0;
@@ -124,7 +124,7 @@ bool check(const char *word)
     unsigned int initial_hash_val;
     initial_hash_val = hash_val = (unsigned int)((hash_val & 0x7ffff) + 1);
 
-    for (unsigned int trav = pool[hash_val]; trav != 0 && hash_val != N; trav = pool[hash_val])
+    for (unsigned int trav = pool[hash_val]; trav != 0 && hash_val != BENCH_N; trav = pool[hash_val])
     {
         if (!memcmp(buf + trav - 1, lower_word, i + 1))
         {
@@ -143,7 +143,7 @@ bool check(const char *word)
 }
 
 // Unloads dictionary from memory, returning true if successful else false
-bool unload(void)
+bool unload_BENCH(void)
 {
     munmap(buf, mmap_len);
     return true;
