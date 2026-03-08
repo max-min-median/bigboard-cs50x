@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
-// #include "benchmark_dictionary.h"
+#include "dictionary50.h"
 #include "dictionary.h"
 
 // Undefine any definitions
@@ -20,12 +20,27 @@
 // This speller's name
 #define SPELLER "speller4"
 
+// Define code for load, check, size, unload
+#define LOAD(suf) loaded = load##suf(dictionary);
+
+#define CHECK(suf) word_ptr = allwords; \
+                   tm##suf.misspellings = 0; \
+                   for (int i = 0; i < tm##suf.words; i++) { \
+                       tm##suf.misspellings += !check##suf(word_ptr); \
+                       word_ptr += wordlen_plus1[i]; \
+                   }
+
+#define SIZE(suf) size##suf();
+
+#define UNLOAD(suf) unloaded = unload##suf();
+
+
 // Define useful macros
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define TIMER(str) do {clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp_##str);} while(0)
-#define TIME(process, instructions) TIMER(start); instructions TIMER(end); CALCTIME(process);
-#define CALCTIME(str) do {double t = calculate(&tp_start, &tp_end); tm.str += t; tm.str##_min = MIN(tm.str##_min, t);} while(0)
-#define USAGE "[ERROR] Usage: ./"SPELLER" [-i num] [-d dict] [-s signature] text\n" 
+#define TIME(process, suf, instructions) TIMER(start); instructions(suf) TIMER(end); CALCTIME(process, suf);
+#define CALCTIME(str, suf) do {double t = calculate(&tp_start, &tp_end); tm##suf.str += t; tm##suf.str##_min = MIN(tm##suf.str##_min, t);} while(0)
+#define USAGE "[ERROR] Usage: ./"SPELLER" [-i num] [-d dict] [-s signature] textpath1 [textpath2...]\n" 
 
 // Default dictionary
 #define DICTIONARY "dictionaries/large"
@@ -48,7 +63,7 @@ typedef struct {
 
 
 // Prototype
-texttime check_text(char *dictionary, char *text, int iters);
+void check_text(char *dictionary, char *text, int iters, char *signature);
 double calculate(const struct timespec *b, const struct timespec *a);
 void print_texttime(texttime tm, char *signature);
 void check_textpath(char *textpath, char *dictionary, int iters, char *signature);
@@ -70,7 +85,7 @@ int main(int argc, char *argv[]) {
             case 'i':
                 num = atoi(optarg);
                 if (num < 1 || num > 100000) {
-                    fprintf(stderr, "-i: number of iterations must be a positive integer from 1 through 100,000\n");
+                    fprintf(stderr, "[ERROR] -i: number of iterations must be a positive integer from 1 through 100,000\n");
                     return 1;
                 }
                 iters = num;
@@ -104,14 +119,13 @@ void check_textpath(char *textpath, char *dictionary, int iters, char *signature
     struct stat sb;
 
     if (stat(textpath, &sb) != 0) {
-        fprintf(stderr, "Invalid path: %s", textpath);
+        fprintf(stderr, "[ERROR] Invalid path: %s", textpath);
         exit(1);
     }
 
     if (S_ISREG(sb.st_mode)) {
         if (strcmp(textpath + strlen(textpath) - 4, ".txt") == 0) {
-            texttime tm = check_text(textpath, dictionary, iters);
-            print_texttime(tm, signature);
+            check_text(textpath, dictionary, iters, signature);
         }
     } else if (S_ISDIR(sb.st_mode)) {
         DIR *dir = opendir(textpath);
@@ -150,20 +164,28 @@ void print_texttime(texttime tm, char *signature) {
     );
 }
 
-texttime check_text(char *text, char *dictionary, int iters) {
+void check_text(char *text, char *dictionary, int iters, char *signature) {
     // Structures for timing data
     struct timespec tm_start, tm_end, tp_start, tp_end;
 
     texttime tm = {text, .load_min = 999999.0, 999999.0, 999999.0, 999999.0};
+    texttime tm_BENCH = tm;
 
     // In the event student uses a global accumulator for size(), repeated calls to load() may not first reset this to 0.
-    // Thus, take note of the current size first.
-    unsigned int prev_size = size();
+    // Thus, take note of the dictionary size immediately after the first load().
+    int prev_dict_size = size(), prev_dict_size_BENCH = size_BENCH();
 
     // Load dictionary
-    TIME(load,
-    bool loaded = load(dictionary);
-    );
+    bool loaded;
+    TIME(load,, LOAD)
+    TIME(load, _BENCH, LOAD)
+
+    // Calculate dict size here, immediately after 1 load().
+    // Also give benefit of doubt if prev_dict_size == size()
+    tm.dict_size = size() - prev_dict_size;
+    if (tm.dict_size == 0) tm.dict_size = prev_dict_size;
+    tm_BENCH.dict_size = size_BENCH() - prev_dict_size_BENCH;
+    if (tm_BENCH.dict_size == 0) tm_BENCH.dict_size = prev_dict_size_BENCH;
 
     // Exit if dictionary not loaded
     if (!loaded) {
@@ -180,9 +202,8 @@ texttime check_text(char *text, char *dictionary, int iters) {
     }
 
     // Skips printing misspellings (for more accurate timing)
-    // printf("\nTo achieve more accurate timing, this version of 'speller' does not print misspellings\n");
     // Prepare to spell-check
-    int index = 0;
+    int index = 0, words = 0;
     char word[LENGTH + 1];
     char *allwords = malloc(1 << 23);  // 8388608 bytes, sufficient for all provided texts
     char *word_ptr = allwords;
@@ -214,17 +235,18 @@ texttime check_text(char *text, char *dictionary, int iters) {
             word[index] = '\0';
 
             // Store word length in `wordlen` array
-            wordlen_plus1[tm.words] = index + 1;
+            wordlen_plus1[words] = index + 1;
 
             // copy word to 'text' list of words
             strcpy(word_ptr, word);
 
             // Prepare for next word
-            word_ptr += wordlen_plus1[tm.words];
-            tm.words++;
+            word_ptr += wordlen_plus1[words];
+            words++;
             index = 0;
         }
     }
+    tm.words = tm_BENCH.words = words;
 
     // Check whether there was an error
     if (ferror(file)) {
@@ -236,41 +258,36 @@ texttime check_text(char *text, char *dictionary, int iters) {
 
     // Spellcheck entire text in one go (for greater timing accuracy)
     for (int k = 0; k < iters; k++) {
-        word_ptr = allwords;
-        tm.misspellings = 0;
-        TIME(check,
-        for (int i = 0; i < tm.words; i++) {
-            tm.misspellings += !check(word_ptr);
-            word_ptr += wordlen_plus1[i];
-        }
-        )
+        TIME(check, , CHECK)
+        TIME(check, _BENCH, CHECK)
     }
 
     // Close text
     fclose(file);
 
-    // Determine dictionary's size
-    TIME(size,
-    tm.dict_size = size() - prev_size;
-    )
-
     // Unload dictionary
-    TIME(unload,
-    bool unloaded = unload();
-    )
-
+    bool unloaded;
+    TIME(unload, , UNLOAD)
     // Abort if dictionary not unloaded
     if (!unloaded) {
-        fprintf(stderr, "Could not unload %s.\n", dictionary);
+        fprintf(stderr, "[ERROR] Could not unload %s.\n", dictionary);
         exit(1);
     }
+    TIME(unload, _BENCH, UNLOAD)
+
+    // Time size once, because by this time we've not taken its timing
+    TIME(size, , SIZE)
+    TIME(size, _BENCH, SIZE)
 
     // Time rest of loads and unloads
     for (int i = 1; i < iters; i++) {
-        TIME(load, load(dictionary);)
-        TIME(size, size();)
+        TIME(load, , LOAD)
+        TIME(load, _BENCH, LOAD)
         // TODO: add check to prevent cheating?
-        TIME(unload, unload();)
+        TIME(size, , SIZE)
+        TIME(size, _BENCH, SIZE)
+        TIME(unload, , UNLOAD)
+        TIME(unload, _BENCH, UNLOAD)
     }
 
     // Success
@@ -280,7 +297,12 @@ texttime check_text(char *text, char *dictionary, int iters) {
     tm.check /= iters;
     tm.size /= iters;
     tm.unload /= iters;
-    return tm;
+    tm_BENCH.load /= iters;
+    tm_BENCH.check /= iters;
+    tm_BENCH.size /= iters;
+    tm_BENCH.unload /= iters;
+    print_texttime(tm, signature);
+    print_texttime(tm_BENCH, signature);
 }
 
 // Returns number of seconds between b and a
