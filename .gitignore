@@ -18,3 +18,6 @@ speller/
 # files where student submissions get temporarily written to
 speller_workspace/_dictionary.c
 speller_workspace/_dictionary.h
+
+# Ignore flask_session cookies
+flask_session/

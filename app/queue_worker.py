@@ -1,8 +1,6 @@
 import logging
-import subprocess
 import threading
 import uuid
-from dataclasses import dataclass
 from time import time_ns
 
 from .benchmark import benchmark_submission

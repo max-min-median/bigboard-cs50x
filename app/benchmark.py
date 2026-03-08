@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 import logging
 import subprocess
-import os
 
-from .config import *
+from .config import  BASE_DIR, SPELLER, SPELLER_WS, ITERATIONS
 from .container import spin_container
 from .models import QueueItem
 
@@ -59,15 +58,15 @@ def _compile_submission(item: QueueItem) -> BenchmarkResult:
 
 
 def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
-    
-    ITERATIONS = os.getenv("ITERATIONS", 1)
+    # ITERATIONS imported up top from config module now
 
     try:
         # TODO this command is a placeholder, we'll clean it up later
         signature = item.submission_id
         sh_cmds = [f"cd /{SPELLER} && "]
 
-        textpaths = list(map(lambda filepath: filepath.name, Path('./speller/texts').iterdir()))
+        # switched this to using BASE_DIR - we should use this to build paths
+        textpaths = list(map(lambda filepath: filepath.name, BASE_DIR / SPELLER / "texts").iterdir())
         log.debug(textpaths)
 
         result = spin_container(parameters=["-c",
@@ -75,7 +74,7 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
             f"./speller -i 5 texts/holmes.txt && echo 'Benchmark:' && ./benchmark -i 5 texts/holmes.txt"])
         output = result.stdout + result.stderr
 
-    
+
         # TODO return different statuses
         status = "done"
 
@@ -84,5 +83,5 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
     except subprocess.TimeoutExpired:
         log.warning("Submission %s execution timed out", item.submission_id)
         return BenchmarkResult(status="error", output="Error: execution timed out")
-    
+
         # TODO may need to implement a docker stop command here in case of timeouts? Can process keep running?
