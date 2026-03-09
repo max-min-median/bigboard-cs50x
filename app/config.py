@@ -11,6 +11,8 @@ dotenv.load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 SPELLER = os.getenv("SPELLER_DIR", "speller")
 SPELLER_WS = os.getenv("SPELLER_WORKSPACE_DIR", "speller_workspace")
+SPELLER_BASENAME=os.environ["SPELLER_BASENAME"]
+BENCHMARK_BASENAME=os.environ["BENCHMARK_BASENAME"]
 
 # Flask app settings
 SECRET_KEY = os.environ["SECRET_KEY"]

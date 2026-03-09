@@ -17,6 +17,15 @@
 // Undefine any definitions
 #undef calculate
 
+// If the submission uses the usual `table[N]`, we may need to null it out for them (to prevent load from blowing up)
+typedef struct node {
+    char word[45 + 1];
+    struct node *next;
+} node;
+
+extern node *table[] __attribute__((weak));
+extern const unsigned int N __attribute__((weak));
+
 // This speller's name
 #define SPELLER "speller4"
 
@@ -48,28 +57,27 @@
 // Struct for timing data, per text
 typedef struct {
     char *filename;
-    int misspellings;
-    int dict_size;
-    int words;
-    double load;
-    double check;
-    double size;
-    double unload;
-    double load_min;
-    double check_min;
-    double size_min;
-    double unload_min;
+    int misspellings, dict_size, words;
+    double load, check, size, unload;
+    double load_min, check_min, size_min, unload_min;
 } texttime;
 
 
-// Prototype
+// Prototypes
 void check_text(char *dictionary, char *text, int iters, char *signature);
 double calculate(const struct timespec *b, const struct timespec *a);
 void print_texttime(texttime tm, char *signature);
 void check_textpath(char *textpath, char *dictionary, int iters, char *signature);
+void clear_table();
 
 
 int main(int argc, char *argv[]) {
+
+    if (table == NULL) {
+        printf("table[] not found in submission.\n");
+    } else {
+        printf("Found table[%i] in submission.\n", N);
+    }
 
     // Turn off error messages from getopt (using our own)
     opterr = 0;
@@ -268,6 +276,8 @@ void check_text(char *text, char *dictionary, int iters, char *signature) {
     // Unload dictionary
     bool unloaded;
     TIME(unload, , UNLOAD)
+    clear_table();
+
     // Abort if dictionary not unloaded
     if (!unloaded) {
         fprintf(stderr, "[ERROR] Could not unload %s.\n", dictionary);
@@ -287,6 +297,7 @@ void check_text(char *text, char *dictionary, int iters, char *signature) {
         TIME(size, , SIZE)
         TIME(size, _BENCH, SIZE)
         TIME(unload, , UNLOAD)
+        clear_table();
         TIME(unload, _BENCH, UNLOAD)
     }
 
@@ -303,6 +314,11 @@ void check_text(char *text, char *dictionary, int iters, char *signature) {
     tm_BENCH.unload /= iters;
     print_texttime(tm, signature);
     print_texttime(tm_BENCH, signature);
+}
+
+// Clears student's `table[N]`, if it exists
+void clear_table() {
+    if (&table) memset(table, 0, N * sizeof *table);
 }
 
 // Returns number of seconds between b and a

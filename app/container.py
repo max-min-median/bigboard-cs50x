@@ -39,6 +39,8 @@ def spin_container(
         "docker", "run", "--rm",
         "-e", f"SPELLER={SPELLER}",
         "-e", f"SPELLER_WS={SPELLER_WS}",
+        "-e", f"BENCHMARK_BASENAME={BENCHMARK_BASENAME}",
+        "-e", f"SPELLER_BASENAME={SPELLER_BASENAME}",
         "--network", "none",
         "--memory", CONTAINER_MEM,
         "--cpus", CONTAINER_CPUS,
