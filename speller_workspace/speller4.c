@@ -60,12 +60,12 @@ typedef struct {
     double load_min, check_min, size_min, unload_min;
 } texttime;
 
-static char *filename, *signature, *dictionary;
+static char *signature, *dictionary;
 static int iters, verbose;
 
 // Prototypes
-static void check_text(texttime *total_tm, texttime *total_tm_BENCH);
-static void print_texttime(texttime tm);
+static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH);
+static void print_texttime(char *filename, texttime tm);
 static void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH);
 static void clear_table();
 
@@ -130,8 +130,8 @@ static int prog_main(int argc, char *argv[]) {
                                                  final_ratio.category##_min = total_tm_BENCH.category##_min / total_tm.category##_min
     FOR_LOAD_CHECK_SIZE_UNLOAD(CALCULATE_RATIOS, )
 
-    print_texttime(total_tm);
-    print_texttime(total_tm_BENCH);
+    print_texttime("TOTAL", total_tm);
+    print_texttime("TOTAL BENCH", total_tm_BENCH);
 
     printf("[%s]%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n",
         (*signature ? signature : "OUT"),
@@ -144,7 +144,7 @@ static int prog_main(int argc, char *argv[]) {
     return 0;
 }
 
-void print_texttime(texttime tm) {
+void print_texttime(char *filename, texttime tm) {
     // [OUT:signature]misspellings, n, words, l, c, s, u, total, l_min, c_min, s_min, u_min, total_min[signature]
     printf("[%s%s%s]%i, %i, %i, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n",
         filename,
@@ -165,8 +165,7 @@ void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH
 
     if (S_ISREG(sb.st_mode)) {
         if (strcmp(textpath + strlen(textpath) - 4, ".txt") == 0) {
-            filename = textpath;
-            check_text(total_tm, total_tm_BENCH);
+            check_text(textpath, total_tm, total_tm_BENCH);
         }
     } else if (S_ISDIR(sb.st_mode)) {
         DIR *dir = opendir(textpath);
@@ -186,7 +185,7 @@ void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH
     }
 }
 
-void check_text(texttime *total_tm, texttime *total_tm_BENCH) {
+void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     // Structures for timing data
     struct timespec tm_start, tm_end, tp_start, tp_end;
 
@@ -325,8 +324,8 @@ void check_text(texttime *total_tm, texttime *total_tm_BENCH) {
     FOR_LOAD_CHECK_SIZE_UNLOAD(DIVIDE_BY_ITERS, _BENCH)
 
     if (verbose) {
-        print_texttime(tm);
-        print_texttime(tm_BENCH);
+        print_texttime(filename, tm);
+        print_texttime(filename, tm_BENCH);
     }
 
     #define ADD_TO_TOTAL(category, bench) total_tm##bench->category += tm##bench.category; \
