@@ -19,14 +19,6 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 DATABASE_URL = os.environ["DATABASE_URL"]
 MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", "32768"))
 
-# speller source filenames
-SPELLER_C_FILENAME = os.getenv("SPELLER_C_FILENAME", "speller3.c")
-DICTIONARY_H_FILENAME = os.getenv("DICTIONARY_H_FILENAME", "distribution_dictionary.h")
-
-# Benchmark filenames: dictionary.c source and executable to use
-DICTIONARY_C_BENCHMARK_FILENAME = os.getenv("DICTIONARY_C_BENCHMARK_FILENAME", "benchmark_dictionary.c")
-BENCHMARK_EXECUTABLE = os.getenv("BENCHMARK_EXECUTABLE", "benchmark")
-
 # Benchmark settings
 ITERATIONS = os.getenv("ITERATIONS", 1)
 
