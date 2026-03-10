@@ -15,9 +15,14 @@ __pycache__/
 speller.zip
 speller/
 
-# files where student submissions get temporarily written to
+# no longer used?
 speller_workspace/_dictionary.c
 speller_workspace/_dictionary.h
+
+# files used during testing
+speller_workspace/dictionary50.o
+speller_workspace/dictionary_sanath.c
+speller_workspace/dictionary50_original.c
 
 # Ignore flask_session cookies
 flask_session/
