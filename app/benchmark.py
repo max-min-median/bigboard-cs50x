@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 import logging
 import subprocess
-
-from .config import  BASE_DIR, SPELLER, SPELLER_WS, BENCHMARK_EXECUTABLE, ITERATIONS
+import shutil
+from .config import  BASE_DIR, SPELLER, SPELLER_WS, SPELLER_BASENAME, BENCHMARK_BASENAME, ITERATIONS
 from .container import spin_container
 from .models import QueueItem
 
@@ -28,19 +28,20 @@ def benchmark_submission(item: QueueItem) -> BenchmarkResult:
 
 
 def _prepare_submission_files(item: QueueItem) -> None:
-    # write/symlink submission code
-    with open(BASE_DIR / SPELLER_WS / "_dictionary.c", "w") as f:
+    # write submission code
+    with open(BASE_DIR / SPELLER / "dictionary.c", "w") as f:
         f.write(item.code)
 
-    header_file = BASE_DIR / SPELLER_WS / "_dictionary.h"
-    header_file.unlink(missing_ok=True)
+    header_file = BASE_DIR / SPELLER / "dictionary.h"
     if item.header:
         with open(header_file, "w") as f:
             f.write(item.header)
     else:
         # if no dictionary.h submitted, use the distribution code version
-        # symlink relative to container's filesystem
-        header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h")
+        try:
+            header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h", target_is_directory=False)
+        except FileExistsError:
+            pass
 
 
 def _compile_submission(item: QueueItem) -> BenchmarkResult:
@@ -63,18 +64,10 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
     try:
         # TODO this command is a placeholder, we'll clean it up later
         signature = item.submission_id
-        sh_cmds = [f"cd /speller"]
-
-        textpaths = ['texts/' + textpath.name for textpath in (BASE_DIR / SPELLER / 'texts').iterdir()]
-
-        sh_cmds += (f"./{cmd} -i {ITERATIONS} -s {signature} {textpath}" for textpath in textpaths for cmd in ["speller", BENCHMARK_EXECUTABLE])
-        # sh_cmds += ("./speller texts/holmes.txt" for _ in range(100))  # 53s
-        # sh_cmds += ["./speller -i 100 texts/holmes.txt"]  # 17s
 
         result = spin_container(parameters=["-c",
-            " && ".join(sh_cmds)
+            f"cd /speller && ./speller4 -i 3 texts",
         ])
-
         output = result.stdout + result.stderr
 
         # TODO return different statuses

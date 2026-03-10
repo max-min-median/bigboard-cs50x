@@ -33,7 +33,7 @@ def login():
         session.clear()
 
         username = request.form.get("username").strip()
-        password = request.form.get("password").strip()
+        password = request.form.get("password")
 
         # Validate whether username and password were submitted or not
         if not username or not password:
@@ -73,8 +73,8 @@ def register():
         session.clear()
 
         username = request.form.get("username").strip()
-        password = request.form.get("password").strip()
-        confirmation = request.form.get("confirmation").strip()
+        password = request.form.get("password")
+        confirmation = request.form.get("confirmation")
 
         if not all([username, password, confirmation]):
             return render_template(
@@ -83,7 +83,7 @@ def register():
 
         if password != confirmation:
             return render_template(
-                "error.html", message="Password and confirmation do not match"
+                "error.html", message="Password and confirmation must match"
             )
 
         existing_user = User.query.filter_by(username=username).first()

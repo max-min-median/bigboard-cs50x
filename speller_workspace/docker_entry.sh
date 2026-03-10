@@ -3,43 +3,43 @@
 set -e
 
 if [ "$1" = "--initialize" ]; then
-    # symbolic links to ephemeral student submission files in /speller_workspace
-    ln -sf -T "/$SPELLER_WS/_dictionary.c" "/$SPELLER/dictionary.c"
-    ln -sf -T "/$SPELLER_WS/_dictionary.h" "/$SPELLER/dictionary.h"
     
     # symbolic link to version of speller.c we will be using
-    ln -sf -T "/$SPELLER_WS/$SPELLER_C_FILENAME" "/$SPELLER/speller.c"
+    ln -sf -T "/$SPELLER_WS/$SPELLER_BASENAME.c" "/$SPELLER/$SPELLER_BASENAME.c"
+
+    echo "Compiling benchmark object file..."
 
     # compile benchmark version of dictionary.c -- we only need to do this once at initialization
-    ln -sf -T "/$SPELLER_WS/$DICTIONARY_H_FILENAME" "/$SPELLER_WS/_dictionary.h"
-    ln -sf -T "/$SPELLER_WS/$DICTIONARY_C_BENCHMARK_FILENAME" "/$SPELLER/$DICTIONARY_C_BENCHMARK_FILENAME"
-
-    cd "/$SPELLER"
-
-    echo "Compiling benchmark executable..."
-
     clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
             -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
-            -Wno-unused-variable -Wshadow -c -o speller.o speller.c                     
+            -Wno-unused-variable -Wshadow -c -o "/$SPELLER_WS/$BENCHMARK_BASENAME.o" "/$SPELLER_WS/$BENCHMARK_BASENAME.c"
 
-    clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
-            -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
-            -Wno-unused-variable -Wshadow -c -o                                         \
-            benchmark_dictionary.o "$DICTIONARY_C_BENCHMARK_FILENAME"
+    # symbolic links to main speller file, as well as 'permanent' benchmark files
+    ln -sf -T "/$SPELLER_WS/$SPELLER_BASENAME.c" "/$SPELLER/$SPELLER_BASENAME.c"
+    ln -sf -T "/$SPELLER_WS/$BENCHMARK_BASENAME.o" "/$SPELLER/$BENCHMARK_BASENAME.o"
+    ln -sf -T "/$SPELLER_WS/$BENCHMARK_BASENAME.h" "/$SPELLER/$BENCHMARK_BASENAME.h"
 
-    clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
-            -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
-            -Wno-unused-variable -Wshadow -o                                            \
-            $BENCHMARK_EXECUTABLE benchmark_dictionary.o speller.o -lm
+    echo "Successfully compiled benchmark object file"
 
-    echo "Success: initialized symbolic links and compiled benchmark executable"
 elif [ "$1" = "--compile-submission" ]; then
-    cd /"$SPELLER"
 
-    # Use CS50 Makefile, but make sure everything is recompiled for each submission
-    make -B
+    cd /$SPELLER
+
+    echo "Compiling speller..."
+    
+    # Compile submission dictionary.c
+    clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
+            -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
+            -Wno-unused-variable -Wshadow -c -o dictionary.o dictionary.c
+
+    # Compile speller
+    clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
+            -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
+            -Wno-unused-variable -Wshadow -c -o $SPELLER_BASENAME.o $SPELLER_BASENAME.c
+
+    # Link
+    clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
+            -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
+            -Wno-unused-variable -Wshadow -o $SPELLER_BASENAME $SPELLER_BASENAME.o dictionary.o $BENCHMARK_BASENAME.o -lm
+
 fi
-#     ./speller [-i iters] [-d dictionary] [-s signature] texts/holmes.txt
-
-#     echo "Benchmark:"
-#     ./$BENCHMARK_EXECUTABLE 5 texts/holmes.txt
