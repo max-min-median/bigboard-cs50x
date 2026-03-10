@@ -38,11 +38,10 @@ def _prepare_submission_files(item: QueueItem) -> None:
             f.write(item.header)
     else:
         # if no dictionary.h submitted, use the distribution code version
-        shutil.copy(BASE_DIR / SPELLER_WS /"distribution_dictionary.h", header_file)
-
-    shutil.copy(BASE_DIR / SPELLER_WS / f"{SPELLER_BASENAME}.c", BASE_DIR / SPELLER)
-    shutil.copy(BASE_DIR / SPELLER_WS / f"{BENCHMARK_BASENAME}.o", BASE_DIR / SPELLER)
-    shutil.copy(BASE_DIR / SPELLER_WS / f"{BENCHMARK_BASENAME}.h", BASE_DIR / SPELLER)
+        try:
+            header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h", target_is_directory=False)
+        except FileExistsError:
+            pass
 
 
 def _compile_submission(item: QueueItem) -> BenchmarkResult:
@@ -67,7 +66,7 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
         signature = item.submission_id
 
         result = spin_container(parameters=["-c",
-            f"cd /speller && ./speller4 -i 5 texts",
+            f"cd /speller && ./speller4 -i 3 texts",
         ])
         output = result.stdout + result.stderr
 

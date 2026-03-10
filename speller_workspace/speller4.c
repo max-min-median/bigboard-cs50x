@@ -186,6 +186,12 @@ void check_text(char *text, char *dictionary, int iters, char *signature) {
     // Load dictionary
     bool loaded;
     TIME(load,, LOAD)
+    // Exit if dictionary not loaded
+    if (!loaded) {
+        fprintf(stderr, "[ERROR] Could not load %s.\n", dictionary);
+        exit(1);
+    }
+
     TIME(load, _BENCH, LOAD)
 
     // Calculate dict size here, immediately after 1 load().
@@ -195,11 +201,7 @@ void check_text(char *text, char *dictionary, int iters, char *signature) {
     tm_BENCH.dict_size = size_BENCH() - prev_dict_size_BENCH;
     if (tm_BENCH.dict_size == 0) tm_BENCH.dict_size = prev_dict_size_BENCH;
 
-    // Exit if dictionary not loaded
-    if (!loaded) {
-        fprintf(stderr, "[ERROR] Could not load %s.\n", dictionary);
-        exit(1);
-    }
+
 
     // Try to open text
     FILE *file = fopen(text, "r");

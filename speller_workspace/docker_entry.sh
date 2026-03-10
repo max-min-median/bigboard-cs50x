@@ -3,16 +3,9 @@
 set -e
 
 if [ "$1" = "--initialize" ]; then
-#     # symbolic links to ephemeral student submission files in /speller_workspace
-#     ln -sf "/$SPELLER_WS/_dictionary.c" "/$SPELLER/dictionary.c"
-#     ln -sf "/$SPELLER_WS/_dictionary.h" "/$SPELLER/dictionary.h"
     
-#     # symbolic link to version of speller.c we will be using
-#     ln -sf "/$SPELLER_WS/$SPELLER_C_FILENAME" "/$SPELLER/speller.c"
-
-#     # compile benchmark version of dictionary.c -- we only need to do this once at initialization
-#     ln -sf "/$SPELLER_WS/$DICTIONARY_H_FILENAME" "/$SPELLER_WS/_dictionary.h"
-#     ln -sf "/$SPELLER_WS/$DICTIONARY_C_BENCHMARK_FILENAME" "/$SPELLER/$DICTIONARY_C_BENCHMARK_FILENAME"
+    # symbolic link to version of speller.c we will be using
+    ln -sf -T "/$SPELLER_WS/$SPELLER_BASENAME.c" "/$SPELLER/$SPELLER_BASENAME.c"
 
     echo "Compiling benchmark object file..."
 
@@ -21,13 +14,19 @@ if [ "$1" = "--initialize" ]; then
             -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
             -Wno-unused-variable -Wshadow -c -o "/$SPELLER_WS/$BENCHMARK_BASENAME.o" "/$SPELLER_WS/$BENCHMARK_BASENAME.c"
 
-    echo "Successfully compiled benchmark executable"
+    # symbolic links to main speller file, as well as 'permanent' benchmark files
+    ln -sf -T "/$SPELLER_WS/$SPELLER_BASENAME.c" "/$SPELLER/$SPELLER_BASENAME.c"
+    ln -sf -T "/$SPELLER_WS/$BENCHMARK_BASENAME.o" "/$SPELLER/$BENCHMARK_BASENAME.o"
+    ln -sf -T "/$SPELLER_WS/$BENCHMARK_BASENAME.h" "/$SPELLER/$BENCHMARK_BASENAME.h"
+
+    echo "Successfully compiled benchmark object file"
+
 elif [ "$1" = "--compile-submission" ]; then
 
     cd /$SPELLER
 
     echo "Compiling speller..."
-
+    
     # Compile submission dictionary.c
     clang   -ggdb3 -gdwarf-4 -O0 -Qunused-arguments -std=c11 -Wall -Werror              \
             -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
@@ -43,6 +42,5 @@ elif [ "$1" = "--compile-submission" ]; then
             -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
             -Wno-unused-variable -Wshadow -o $SPELLER_BASENAME $SPELLER_BASENAME.o dictionary.o $BENCHMARK_BASENAME.o -lm
 
-    rm *.c *.o *.h
-
+    rm dictionary.* $BENCHMARK_BASENAME.o
 fi
