@@ -42,5 +42,4 @@ elif [ "$1" = "--compile-submission" ]; then
             -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter   \
             -Wno-unused-variable -Wshadow -o $SPELLER_BASENAME $SPELLER_BASENAME.o dictionary.o $BENCHMARK_BASENAME.o -lm
 
-    rm dictionary.* $BENCHMARK_BASENAME.o
 fi
