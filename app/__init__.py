@@ -53,7 +53,7 @@ def create_app() -> Flask:
         log.error("Error while spinning up container during app initialization")
         sys.exit(1)
 
-    start_queue_worker()
+    start_queue_worker(app)
 
     return app
 

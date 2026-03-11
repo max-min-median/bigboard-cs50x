@@ -21,7 +21,7 @@
         <tbody>
             {% for submission in pagination.items %}
             <tr>
-                <td>{{ (pagination.page - 1) * 50 + loop.index }}</td>
+                <td>{{ (pagination.page - 1) * per_page + loop.index }}</td>
                 <td>{{ submission.user.username }}</td>
                 <td>{{ "%.4f"|format(submission.total_average) }}</td>
                 <td>{{ "%.4f"|format(submission.total_minimum) }}</td>

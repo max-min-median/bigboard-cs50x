@@ -4,7 +4,8 @@ import uuid
 from time import time_ns
 
 from .benchmark import benchmark_submission
-from .models import QueueItem
+from .config import SUBMISSIONS_MAX_PER_USER
+from .models import QueueItem, Submission, User, db
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ _pending: list[QueueItem] = []
 _all: dict[str, QueueItem] = {}
 _lock = threading.Lock()
 _wake_worker_event = threading.Event()
+_app = None
 
 
 def enqueue(code: str, header: str, user_id: int) -> QueueItem:
@@ -63,6 +65,33 @@ def queue_length() -> int:
         return len(_pending)
 
 
+def _save_submission(item: QueueItem, results: dict[str, float]) -> None:
+    """Save a completed benchmark to the database, increment the user's submission counter,
+    and enforce the per-user submission cap by deleting their worst result if needed."""
+    user = User.query.get(item.user_id)
+    user.total_submissions += 1
+
+    # Enforce cap: delete worst submission if at the limit
+    existing = (
+        Submission.query
+        .filter_by(user_id=item.user_id)
+        .order_by(Submission.total_average.desc())
+        .all()
+    )
+    if len(existing) >= SUBMISSIONS_MAX_PER_USER:
+        db.session.delete(existing[0])
+
+    submission = Submission(
+        submission_id=item.submission_id,
+        user_id=item.user_id,
+        **results
+    )
+    db.session.add(submission)
+    db.session.commit()
+    log.info("Saved submission %s for user %d (lifetime total: %d)",
+             item.submission_id, item.user_id, user.total_submissions)
+
+
 def _process_item(item: QueueItem) -> None:
     """
     Write submission contents to files where they will be accessible to a docker container and
@@ -70,13 +99,17 @@ def _process_item(item: QueueItem) -> None:
     """
     log.info("processing submission %s", item.submission_id)
 
-    result = benchmark_submission(item)
+    with _app.app_context():
+        result = benchmark_submission(item)
 
-    with _lock:
-        item.output = result.output
-        item.status = result.status
-        if item in _pending:
-            _pending.remove(item)
+        with _lock:
+            item.output = result.output
+            item.status = result.status
+            if item in _pending:
+                _pending.remove(item)
+
+        if result.status == "done" and result.results:
+            _save_submission(item, result.results)
 
 
 def _queue_worker() -> None:
@@ -97,7 +130,9 @@ def _queue_worker() -> None:
             _process_item(item)
 
 
-def start_queue_worker() -> None:
+def start_queue_worker(app) -> None:
+    global _app
+    _app = app
     t = threading.Thread(target=_queue_worker, daemon=True, name="queue-worker")
     log.info("Starting queue worker thread")
     t.start()

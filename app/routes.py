@@ -15,6 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from . import queue_worker
+from .config import SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE
 from .models import Submission, User, db
 
 log = logging.getLogger(__name__)
@@ -157,12 +158,16 @@ def leaderboard():
         .order_by(Submission.total_average)
     )
 
-    pagination = query.paginate(page=page, per_page=50, error_out=False)
+    pagination = query.paginate(page=page, per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, error_out=False)
 
     if page > pagination.pages > 0:
         return redirect(f"/leaderboard?page={pagination.pages}")
 
-    return render_template("leaderboard.html", pagination=pagination)
+    return render_template(
+        "leaderboard.html", 
+        pagination=pagination, 
+        per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE
+    )
 
 
 @main.route("/status/<submission_id>")

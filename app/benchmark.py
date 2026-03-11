@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import logging
 import subprocess
 import re
-from .config import  BASE_DIR, SPELLER, SPELLER_WS, SPELLER_BASENAME, BENCHMARK_BASENAME, ITERATIONS
+from .config import BASE_DIR, SPELLER, SPELLER_WS, SPELLER_BASENAME, BENCHMARK_BASENAME, ITERATIONS
 from .container import spin_container
 from .models import QueueItem
 
@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 class BenchmarkResult:
     status: str = ""
     output: str = ""
+    results: dict[str, float] | None = None
 
 
 def benchmark_submission(item: QueueItem) -> BenchmarkResult:
