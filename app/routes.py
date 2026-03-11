@@ -11,8 +11,11 @@ from flask import (
 from flask_login import current_user, login_required, login_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from sqlalchemy import func
+from sqlalchemy.orm import joinedload
+
 from . import queue_worker
-from .models import User, db
+from .models import Submission, User, db
 
 log = logging.getLogger(__name__)
 
@@ -124,6 +127,42 @@ def submit():
 
     else:
         return render_template("submit.html")
+
+
+@main.route("/leaderboard")
+def leaderboard():
+    """Show leaderboard — one best submission per user, paginated."""
+    page = max(1, request.args.get("page", 1, type=int))
+
+    best_per_user = (
+        db.session.query(
+            Submission.user_id,
+            func.max(Submission.total_average).label("best")
+        )
+        .group_by(Submission.user_id)
+        .subquery()
+    )
+
+    # Join back to get the full submission row for each user's best
+    query = (
+        db.session.query(Submission)
+        .options(joinedload(Submission.user))
+        .join(
+            best_per_user,
+            db.and_(
+                Submission.user_id == best_per_user.c.user_id,
+                Submission.total_average == best_per_user.c.best,
+            ),
+        )
+        .order_by(Submission.total_average)
+    )
+
+    pagination = query.paginate(page=page, per_page=50, error_out=False)
+
+    if page > pagination.pages > 0:
+        return redirect(f"/leaderboard?page={pagination.pages}")
+
+    return render_template("leaderboard.html", pagination=pagination)
 
 
 @main.route("/status/<submission_id>")

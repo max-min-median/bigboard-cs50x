@@ -1,1 +1,55 @@
 {% extends "layout.html" %}
+
+{% block main %}
+<div class="container mt-4">
+    <h2>Leaderboard</h2>
+
+    {% if pagination.items %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Total (avg)</th>
+                <th>Total (min)</th>
+                <th>Load (avg)</th>
+                <th>Check (avg)</th>
+                <th>Unload (avg)</th>
+                <th>Size (avg)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for submission in pagination.items %}
+            <tr>
+                <td>{{ (pagination.page - 1) * 50 + loop.index }}</td>
+                <td>{{ submission.user.username }}</td>
+                <td>{{ "%.4f"|format(submission.total_average) }}</td>
+                <td>{{ "%.4f"|format(submission.total_minimum) }}</td>
+                <td>{{ "%.4f"|format(submission.load_average) }}</td>
+                <td>{{ "%.4f"|format(submission.check_average) }}</td>
+                <td>{{ "%.4f"|format(submission.unload_average) }}</td>
+                <td>{{ "%.4f"|format(submission.size_average) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pagination.prev_num }}">Previous</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            </li>
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ pagination.next_num }}">Next</a>
+            </li>
+        </ul>
+    </nav>
+
+    {% else %}
+    <p>No submissions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
