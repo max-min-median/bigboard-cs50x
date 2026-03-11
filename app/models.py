@@ -10,6 +10,7 @@ db = SQLAlchemy()
 # not for database, just needed across different modules
 @dataclass
 class QueueItem:
+    user_id: int                # primary key id of User who submitted the request, for use when we save to db
     submission_id: str          # unique id used by client to check status of their submission
     timestamp: int              # Unix timestamp
     code: str                   # contents of submission's dictionary.c

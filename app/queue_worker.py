@@ -14,7 +14,7 @@ _lock = threading.Lock()
 _wake_worker_event = threading.Event()
 
 
-def enqueue(code: str, header: str) -> QueueItem:
+def enqueue(code: str, header: str, user_id: int) -> QueueItem:
     """
     Add a new submission to queue, generating a uuid for it, storing its timestamp, 
     and contents of dictionary.c and dictionary.h. If student checked box to use distribution 
@@ -22,7 +22,13 @@ def enqueue(code: str, header: str) -> QueueItem:
     will wake up the thread executing the looping _worker function. Return the generated uuid 
     so it can be sent to the user in the response of /submit route to check their status later.
     """
-    item = QueueItem(submission_id=str(uuid.uuid4()), timestamp=time_ns(), code=code, header=header)
+    item = QueueItem(
+        user_id=user_id,
+        submission_id=str(uuid.uuid4()),
+        timestamp=time_ns(),
+        code=code,
+        header=header
+    )
     with _lock:
         _pending.append(item)
         _all[item.submission_id] = item

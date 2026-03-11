@@ -8,7 +8,7 @@ from flask import (
     request,
     session,
 )
-from flask_login import login_required, login_user
+from flask_login import current_user, login_required, login_user
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import queue_worker
@@ -119,7 +119,7 @@ def submit():
         code = data["code"]
         header = data.get("header", "")
 
-        item = queue_worker.enqueue(code, header)
+        item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
         return jsonify({"submission_id": item.submission_id})
 
     else:
