@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 import subprocess
-import shutil
+import re
 from .config import  BASE_DIR, SPELLER, SPELLER_WS, SPELLER_BASENAME, BENCHMARK_BASENAME, ITERATIONS
 from .container import spin_container
 from .models import QueueItem
@@ -66,15 +66,24 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
         signature = item.submission_id
 
         result = spin_container(parameters=["-c",
-            f"cd /speller && ./speller4 -i 3 texts",
+            f"cd /speller && ./speller4 -i {ITERATIONS} -s {signature} texts",
         ])
-        output = result.stdout + result.stderr
 
-        # TODO return different statuses
-        status = "done"
-
-        log.debug("Submission %s finished benchmark, exit code: %s", item.submission_id, result.returncode)
-        return BenchmarkResult("done", output)
+        if result.stderr:
+            log.debug("Error benchmarking %s, exit code: %s", item.submission_id, result.returncode)
+            log.debug(result.stderr)
+            return BenchmarkResult(status="error", output=result.stderr)
+        else:
+            # Grab output line:
+            if (m := re.search(rf"^\[{signature}\].+?$", result.stdout, re.MULTILINE)):
+                m.group()
+                log.debug(f"Found output: \"{m.group()}\"")
+                return BenchmarkResult(status="done", output=m.group())
+            else:
+                log.debug("Error benchmarking %s, output string not found!", item.submission_id, result.returncode)
+                log.debug(result.stdout)
+                return BenchmarkResult(status="error", output=result.stdout)
+                
     except subprocess.TimeoutExpired:
         log.warning("Submission %s execution timed out", item.submission_id)
         return BenchmarkResult(status="error", output="Error: execution timed out")
