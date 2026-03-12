@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 class BenchmarkResult:
     status: str = ""
     output: str = ""
+    results: dict[str, float] = {}
 
 
 def benchmark_submission(item: QueueItem) -> BenchmarkResult:
@@ -73,16 +74,25 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
             log.debug("Error benchmarking %s, exit code: %s", item.submission_id, result.returncode)
             log.debug(result.stderr)
             return BenchmarkResult(status="error", output=result.stderr)
-        else:
-            # Grab output line:
-            if (m := re.search(rf"^\[{signature}\].+?$", result.stdout, re.MULTILINE)):
-                m.group()
-                log.debug(f"Found output: \"{m.group()}\"")
-                return BenchmarkResult(status="done", output=m.group())
-            else:
-                log.debug("Error benchmarking %s, output string not found!", item.submission_id, result.returncode)
+        elif (m := re.search(rf"^\[{signature}\](.+?)$", result.stdout, re.MULTILINE)): # Grab output line
+            log.debug(f"Found output: \"{m.group()}\"")
+            try:
+                data = [*map(float, m.groups(1)[0].split(', '))]
+            except ValueError:
+                log.debug("Error benchmarking %s: some fields cannot be parsed as floats", item.submission_id)
                 log.debug(result.stdout)
                 return BenchmarkResult(status="error", output=result.stdout)
+            if len(data) != 10:
+                log.debug("Error benchmarking %s: output has %i fields instead of %i", item.submission_id, len(data), 10)
+                log.debug(result.stdout)
+                return BenchmarkResult(status="error", output=result.stdout)
+            else:
+                parsed_dict = dict(zip((category + avg_or_min for avg_or_min in ["_average", "_minimum"] for category in ["load", "check", "size", "unload", "total"]), data))
+                return BenchmarkResult(status="done", output=m.group(), results=parsed_dict)
+        else:
+            log.debug("Error benchmarking %s, output string not found!", item.submission_id)
+            log.debug(result.stdout)
+            return BenchmarkResult(status="error", output=result.stdout)
                 
     except subprocess.TimeoutExpired:
         log.warning("Submission %s execution timed out", item.submission_id)
