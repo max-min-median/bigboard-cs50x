@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block extra_head %}
+<script src="{{ url_for('static', filename='profile.js') }}" defer></script>
+{% endblock %}
+
+{% block main %}
+<div class="container mt-4">
+    <h2>{{ user.username }}</h2>
+    <p class="text-muted">
+        Joined <span class="local-date" data-timestamp="{{ user.registration_date }}"></span>
+        &mdash; Submissions: {{ submissions|length }} / {{ max_submissions }} saved, {{ user.total_submissions }} lifetime
+    </p>
+
+    {% if submissions %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Total (avg)</th>
+                <th>Total (min)</th>
+                <th>Load (avg)</th>
+                <th>Check (avg)</th>
+                <th>Unload (avg)</th>
+                <th>Size (avg)</th>
+                <th>Label</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for submission in submissions %}
+            <tr id="row-{{ submission.id }}">
+                <td>{{ loop.index }}</td>
+                <td><span class="local-date" data-timestamp="{{ submission.timestamp }}"></span></td>
+                <td>{{ "%.3f"|format(submission.total_average) }}</td>
+                <td>{{ "%.3f"|format(submission.total_minimum) }}</td>
+                <td>{{ "%.3f"|format(submission.load_average) }}</td>
+                <td>{{ "%.3f"|format(submission.check_average) }}</td>
+                <td>{{ "%.3f"|format(submission.unload_average) }}</td>
+                <td>{{ "%.3f"|format(submission.size_average) }}</td>
+                <td>
+                    <span class="label-text">{{ submission.label or "" }}</span>
+                    <input class="label-input form-control form-control-sm d-none" type="text" maxlength="100" value="{{ submission.label or "" }}">
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary btn-edit-label" data-id="{{ submission.id }}">Edit label</button>
+                    <button class="btn btn-sm btn-outline-secondary btn-save-label d-none" data-id="{{ submission.id }}">Save</button>
+                    <button class="btn btn-sm btn-outline-secondary btn-cancel-label d-none" data-id="{{ submission.id }}">Cancel</button>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ submission.id }}">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No submissions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

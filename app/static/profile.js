@@ -1,0 +1,89 @@
+const localDates = document.querySelectorAll('.local-date');
+const editLabelBtns = document.querySelectorAll('.btn-edit-label');
+const saveLabelBtns = document.querySelectorAll('.btn-save-label');
+const cancelLabelBtns = document.querySelectorAll('.btn-cancel-label');
+const deleteBtns = document.querySelectorAll('.btn-delete');
+
+
+// Format all .local-date spans from Unix timestamps to user's local time
+localDates.forEach(el => {
+    el.textContent = new Date(el.dataset.timestamp * 1000).toLocaleDateString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric'
+    });
+});
+
+
+// Edit label flow: show input, hide text and edit button, show save/cancel
+editLabelBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const row = document.getElementById('row-' + id);
+        row.querySelector('.label-text').classList.add('d-none');
+        row.querySelector('.label-input').classList.remove('d-none');
+        row.querySelector('.btn-edit-label').classList.add('d-none');
+        row.querySelector('.btn-save-label').classList.remove('d-none');
+        row.querySelector('.btn-cancel-label').classList.remove('d-none');
+    });
+});
+
+// Cancel: revert to original label text
+cancelLabelBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        const row = document.getElementById('row-' + id);
+        const labelText = row.querySelector('.label-text');
+        const labelInput = row.querySelector('.label-input');
+        labelInput.value = labelText.textContent;
+        labelInput.classList.add('d-none');
+        labelText.classList.remove('d-none');
+        row.querySelector('.btn-edit-label').classList.remove('d-none');
+        row.querySelector('.btn-save-label').classList.add('d-none');
+        btn.classList.add('d-none');
+    });
+});
+
+// Save: POST new label to server, update text on success
+saveLabelBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const row = document.getElementById('row-' + id);
+        const labelText = row.querySelector('.label-text');
+        const labelInput = row.querySelector('.label-input');
+        const newLabel = labelInput.value.trim();
+
+        try {
+            const res = await fetch(`/submission/${id}/label`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ label: newLabel })
+            });
+            if (!res.ok) throw new Error();
+            labelText.textContent = newLabel;
+        } catch {
+            alert('Failed to save label. Please try again.');
+            return;
+        }
+
+        labelInput.classList.add('d-none');
+        labelText.classList.remove('d-none');
+        row.querySelector('.btn-edit-label').classList.remove('d-none');
+        btn.classList.add('d-none');
+        row.querySelector('.btn-cancel-label').classList.add('d-none');
+    });
+});
+
+// Delete: remove submission row on success
+deleteBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+        if (!confirm('Delete this submission?')) return;
+
+        const id = btn.dataset.id;
+        try {
+            const res = await fetch(`/submission/${id}/delete`, { method: 'POST' });
+            if (!res.ok) throw new Error();
+            document.getElementById('row-' + id).remove();
+        } catch {
+            alert('Failed to delete submission. Please try again.');
+        }
+    });
+});

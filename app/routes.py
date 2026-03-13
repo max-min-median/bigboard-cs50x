@@ -15,7 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from . import queue_worker
-from .config import SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE
+from .config import SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, SUBMISSIONS_MAX_PER_USER
 from .models import Submission, User, db
 
 log = logging.getLogger(__name__)
@@ -155,7 +155,7 @@ def leaderboard():
                 Submission.total_average == best_per_user.c.best,
             ),
         )
-        .order_by(Submission.total_average)
+        .order_by(Submission.total_average.desc())
     )
 
     pagination = query.paginate(page=page, per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, error_out=False)
@@ -168,6 +168,38 @@ def leaderboard():
         pagination=pagination, 
         per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE
     )
+
+
+@main.route("/profile")
+@login_required
+def profile():
+    """Show current user's submissions."""
+    submissions = (
+        Submission.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Submission.total_average.desc())
+        .all()
+    )
+    return render_template("profile.html", user=current_user, submissions=submissions, max_submissions=SUBMISSIONS_MAX_PER_USER)
+
+
+@main.route("/submission/<int:submission_id>/delete", methods=["POST"])
+@login_required
+def delete_submission(submission_id: int):
+    submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
+    db.session.delete(submission)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@main.route("/submission/<int:submission_id>/label", methods=["POST"])
+@login_required
+def edit_label(submission_id: int):
+    submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
+    data = request.get_json()
+    submission.label = (data.get("label") or "")[:100]
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @main.route("/status/<submission_id>")
