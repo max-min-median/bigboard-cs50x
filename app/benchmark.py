@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 import subprocess
 import re
@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 class BenchmarkResult:
     status: str = ""
     output: str = ""
-    results: dict[str, float] = {}
+    results: dict[str, float] = field(default_factory=dict)
 
 
 def benchmark_submission(item: QueueItem) -> BenchmarkResult:
