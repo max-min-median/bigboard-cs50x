@@ -25,7 +25,11 @@ def benchmark_submission(item: QueueItem) -> BenchmarkResult:
         return compile_result
 
     execute_result = _execute_benchmark(item)
-    return BenchmarkResult(execute_result.status, compile_result.output + "\n" + execute_result.output)
+    return BenchmarkResult(
+      status=execute_result.status,
+      output=compile_result.output + "\n" + execute_result.output,
+      results=execute_result.results,
+  )
 
 
 def _prepare_submission_files(item: QueueItem) -> None:
