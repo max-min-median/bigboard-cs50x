@@ -3,6 +3,7 @@ const editLabelBtns = document.querySelectorAll('.btn-edit-label');
 const saveLabelBtns = document.querySelectorAll('.btn-save-label');
 const cancelLabelBtns = document.querySelectorAll('.btn-cancel-label');
 const deleteBtns = document.querySelectorAll('.btn-delete');
+const savedCountSpan = document.getElementById('saved-count');
 
 
 // Format all .local-date spans from Unix timestamps to user's local time
@@ -13,7 +14,6 @@ localDates.forEach(el => {
 });
 
 
-// Edit label flow: show input, hide text and edit button, show save/cancel
 editLabelBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -26,7 +26,7 @@ editLabelBtns.forEach(btn => {
     });
 });
 
-// Cancel: revert to original label text
+// Cancel label edit: revert to original label text
 cancelLabelBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -72,7 +72,7 @@ saveLabelBtns.forEach(btn => {
     });
 });
 
-// Delete: remove submission row on success
+// Delete: remove submission row from db
 deleteBtns.forEach(btn => {
     btn.addEventListener('click', async () => {
         if (!confirm('Delete this submission?')) return;
@@ -82,6 +82,8 @@ deleteBtns.forEach(btn => {
             const res = await fetch(`/submission/${id}/delete`, { method: 'POST' });
             if (!res.ok) throw new Error();
             document.getElementById('row-' + id).remove();
+            const data = await res.json();
+            savedCountSpan.textContent = data.saved_count;
         } catch {
             alert('Failed to delete submission. Please try again.');
         }

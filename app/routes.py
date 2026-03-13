@@ -189,7 +189,8 @@ def delete_submission(submission_id: int):
     submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
     db.session.delete(submission)
     db.session.commit()
-    return jsonify({"ok": True})
+    saved_count = Submission.query.filter_by(user_id=current_user.id).count()
+    return jsonify({"ok": True, "saved_count": saved_count})
 
 
 @main.route("/submission/<int:submission_id>/label", methods=["POST"])
@@ -197,6 +198,8 @@ def delete_submission(submission_id: int):
 def edit_label(submission_id: int):
     submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data received."}), 400
     submission.label = (data.get("label") or "")[:100]
     db.session.commit()
     return jsonify({"ok": True})
