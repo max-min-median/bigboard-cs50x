@@ -1,0 +1,24 @@
+.bench-cell {
+    text-align: center;
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+}
+
+.label-btn-cell {
+    min-width: 120px;
+    text-align: center;
+}
+
+.label-input {
+    border: 2px solid #0d6efd !important;
+}
+
+.table td, .table th {
+    padding: 0.6rem 1rem;
+    border-right: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.table td:last-child, .table th:last-child {
+    border-right: none;
+}

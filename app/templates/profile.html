@@ -1,9 +1,5 @@
 {% extends "layout.html" %}
 
-{% block extra_head %}
-<script src="{{ url_for('static', filename='profile.js') }}" defer></script>
-{% endblock %}
-
 {% block main %}
 <div class="container mt-4">
     <h2>{{ user.username }}</h2>
@@ -18,15 +14,19 @@
             <tr>
                 <th>#</th>
                 <th>Date</th>
-                <th>Total (avg)</th>
-                <th>Total (min)</th>
-                <th>Load (avg)</th>
-                <th>Check (avg)</th>
-                <th>Unload (avg)</th>
-                <th>Size (avg)</th>
+                <th class="bench-cell">Total (avg)</th>
+                <th class="bench-cell">Total (min)</th>
+                <th class="bench-cell">Load (avg)</th>
+                <th class="bench-cell">Load (min)</th>
+                <th class="bench-cell">Check (avg)</th>
+                <th class="bench-cell">Check (min)</th>
+                <th class="bench-cell">Unload (avg)</th>
+                <th class="bench-cell">Unload (min)</th>
+                <th class="bench-cell">Size (avg)</th>
+                <th class="bench-cell">Size (min)</th>
+                <th></th>
+                <th></th>
                 <th>Label</th>
-                <th></th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -34,23 +34,27 @@
             <tr id="row-{{ submission.id }}">
                 <td>{{ loop.index }}</td>
                 <td><span class="local-date" data-timestamp="{{ submission.timestamp }}"></span></td>
-                <td>{{ "%.3f"|format(submission.total_average) }}</td>
-                <td>{{ "%.3f"|format(submission.total_minimum) }}</td>
-                <td>{{ "%.3f"|format(submission.load_average) }}</td>
-                <td>{{ "%.3f"|format(submission.check_average) }}</td>
-                <td>{{ "%.3f"|format(submission.unload_average) }}</td>
-                <td>{{ "%.3f"|format(submission.size_average) }}</td>
-                <td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_average) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_average) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_average) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_average) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_average) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_minimum) }}</td>
+                <td class="py-0">
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ submission.id }}">Delete</button>
+                </td>
+                <td class="label-btn-cell py-0">
+                    <button class="btn btn-sm btn-outline-secondary btn-edit-label" data-id="{{ submission.id }}">Label</button>
+                    <button class="btn btn-sm btn-outline-secondary btn-save-label d-none" data-id="{{ submission.id }}">Save</button>
+                    <button class="btn btn-sm btn-outline-danger btn-cancel-label d-none" data-id="{{ submission.id }}">&times;</button>
+                </td>
+                <td class="py-0">
                     <span class="label-text">{{ submission.label or "" }}</span>
                     <input class="label-input form-control form-control-sm d-none" type="text" maxlength="100" value="{{ submission.label or "" }}">
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary btn-edit-label" data-id="{{ submission.id }}">Edit label</button>
-                    <button class="btn btn-sm btn-outline-secondary btn-save-label d-none" data-id="{{ submission.id }}">Save</button>
-                    <button class="btn btn-sm btn-outline-secondary btn-cancel-label d-none" data-id="{{ submission.id }}">Cancel</button>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ submission.id }}">Delete</button>
                 </td>
             </tr>
             {% endfor %}

@@ -3,13 +3,14 @@ const editLabelBtns = document.querySelectorAll('.btn-edit-label');
 const saveLabelBtns = document.querySelectorAll('.btn-save-label');
 const cancelLabelBtns = document.querySelectorAll('.btn-cancel-label');
 const deleteBtns = document.querySelectorAll('.btn-delete');
+const labelInputs = document.querySelectorAll('.label-input');
 const savedCountSpan = document.getElementById('saved-count');
 
 
 // Format all .local-date spans from Unix timestamps to user's local time
 localDates.forEach(el => {
     el.textContent = new Date(el.dataset.timestamp * 1000).toLocaleDateString(undefined, {
-        year: 'numeric', month: 'short', day: 'numeric'
+        year: '2-digit', month: '2-digit', day: '2-digit'
     });
 });
 
@@ -69,6 +70,15 @@ saveLabelBtns.forEach(btn => {
         row.querySelector('.btn-edit-label').classList.remove('d-none');
         btn.classList.add('d-none');
         row.querySelector('.btn-cancel-label').classList.add('d-none');
+    });
+});
+
+// Enter/Esc in label input triggers save/cancel
+labelInputs.forEach(input => {
+    input.addEventListener('keydown', e => {
+        const row = input.closest('tr');
+        if (e.key === 'Enter') row.querySelector('.btn-save-label').click();
+        if (e.key === 'Escape') row.querySelector('.btn-cancel-label').click();
     });
 });
 

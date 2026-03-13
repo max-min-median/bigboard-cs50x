@@ -12,9 +12,13 @@
 
         <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
         <link rel="icon" href="{{ url_for('static', filename='cs50.ico') }}" type="image/x-icon">
 
         <title>Bigboard - CS50x Speller Benchmark</title>
+
+        <script src="{{ url_for('static', filename='table_colors.js') }}" defer></script>
+        <script src="{{ url_for('static', filename='profile.js') }}" defer></script>
 
         {% block extra_head %}{% endblock %}
 
