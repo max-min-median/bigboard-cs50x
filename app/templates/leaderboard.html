@@ -21,7 +21,7 @@
     <h2>Leaderboard</h2>
 
     {% if pagination.items %}
-    {{ pagination_nav() }}
+    {% if pagination.pages > 1 %}{{ pagination_nav() }}{% endif %}
 
     <table class="table">
         <thead>
@@ -52,7 +52,7 @@
         </tbody>
     </table>
 
-    {{ pagination_nav() }}
+    {% if pagination.pages > 1 %}{{ pagination_nav() }}{% endif %}
 
     {% else %}
     <p>No submissions yet.</p>
