@@ -6,9 +6,10 @@ import colorlog
 from flask import Flask, jsonify, redirect, request, url_for
 from flask_login import LoginManager
 
+from flask_assets import Bundle, Environment
 from flask_session import Session
 
-from .config import DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
+from .config import BASE_DIR, DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
 from .container import spin_container
 from .models import User, db
 from .queue_worker import start_queue_worker
@@ -44,6 +45,18 @@ def create_app() -> Flask:
     app.config["SESSION_TYPE"] = "filesystem"
     Session(app)
 
+    # Bundle .js and .css files together using flask-assets library to reduce server requests
+    # To enable minification, install cssmin and rjsmin (pip install cssmin rjsmin) and use:
+    # assets.register("css_bundled", Bundle(*css_files, filters="cssmin", output="bundled/all.css"))
+    # assets.register("js_bundled", Bundle(*js_files, filters="rjsmin", output="bundled/all.js"))
+    static_dir = BASE_DIR / "app" / "static"
+    css_files = [f.name for f in static_dir.glob("*.css")]
+    js_files = [f.name for f in static_dir.glob("*.js")]
+    assets = Environment(app)
+    assets.register("css_bundled", Bundle(*css_files, output="bundled/all.css"))
+    assets.register("js_bundled", Bundle(*js_files, output="bundled/all.js"))
+
+    # 
     db.init_app(app)
     with app.app_context():
         db.create_all()

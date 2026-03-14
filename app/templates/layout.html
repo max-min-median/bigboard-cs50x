@@ -29,15 +29,12 @@
             })();
         </script>
 
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='submit_page.css') }}">
-
-
-        <script src="{{ url_for('static', filename='table_colors.js') }}" defer></script>
-        <script src="{{ url_for('static', filename='profile.js') }}" defer></script>
-        <script src="{{ url_for('static', filename='submit_page.js') }}" defer></script>
+        {% assets "css_bundled" %}
+            <link rel="stylesheet" href="{{ ASSET_URL }}">
+        {% endassets %}
+        {% assets "js_bundled" %}
+            <script src="{{ ASSET_URL }}" defer></script>
+        {% endassets %}
     </head>
 
     <body>
