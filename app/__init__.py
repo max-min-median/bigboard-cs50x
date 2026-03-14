@@ -51,11 +51,11 @@ def init_login_manager(app: Flask) -> None:
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, user_id)
 
     @login_manager.unauthorized_handler
     def unauthorized():
-        if request.is_json or request.path == url_for("main.submit"):
+        if request.is_json:
             return jsonify({"error": "Authentication failed, please log in."}), 401
         return redirect(url_for("main.login"))
 

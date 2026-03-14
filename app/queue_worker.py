@@ -68,7 +68,7 @@ def queue_length() -> int:
 def _save_submission(item: QueueItem, results: dict[str, float]) -> None:
     """Save a completed benchmark to the database, increment the user's submission counter,
     and enforce the per-user submission cap by deleting their worst result if needed."""
-    user = User.query.get(item.user_id)
+    user = db.session.get(User, item.user_id)
     user.total_submissions += 1
 
     # Enforce cap: delete worst submission if at the limit
