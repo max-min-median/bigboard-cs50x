@@ -6,9 +6,8 @@ import colorlog
 from flask import Flask, jsonify, redirect, request, url_for
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
-from flask_session import Session
 
-from .config import BASE_DIR, DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
+from .config import *
 from .container import spin_container
 from .models import User, db
 from .queue_worker import start_queue_worker
@@ -60,11 +59,6 @@ def init_login_manager(app: Flask) -> None:
             return jsonify({"error": "Authentication failed, please log in."}), 401
         return redirect(url_for("main.login"))
 
-    # Configure session
-    app.config["SESSION_PERMANENT"] = False
-    app.config["SESSION_TYPE"] = "filesystem"
-    Session(app)
-
 
 def init_static_bundling(app: Flask) -> None:
     """ 
@@ -82,6 +76,16 @@ def init_static_bundling(app: Flask) -> None:
 
 
 def setup_logging() -> None:
+    class FilterPolling(logging.Filter):
+        """
+        the /status route is very spammy since webpage checks submission status at quick intervals
+        this just filters out /status request logs completely
+        """
+        def filter(self, record):
+            return "GET /status/" not in record.getMessage()
+    if DISABLE_STATUS_ROUTE_LOGS:
+        logging.getLogger('werkzeug').addFilter(FilterPolling())
+
     # Colored console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
