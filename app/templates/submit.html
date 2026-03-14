@@ -1,11 +1,5 @@
 {% extends "layout.html" %}
 
-{% block extra_head %}
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='submit_page.css') }}">
-
-{% endblock %}
-
 {% block main %}
 
     <div id="submit-page-container">
@@ -40,7 +34,5 @@
             <pre id="output"></pre>
         </div>
     </div>
-
-    <script src="{{ url_for('static', filename='submit_page.js') }}"></script>
 
 {% endblock %}

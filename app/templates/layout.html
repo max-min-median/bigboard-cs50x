@@ -3,9 +3,11 @@
 <html lang="en">
 
     <head>
-
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Bigboard50x Speller Benchmark</title>
+        <link rel="icon" href="{{ url_for('static', filename='cs50.ico') }}" type="image/x-icon">
 
         <!-- Get Bootstrap CSS -->
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -13,19 +15,15 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
-        <link rel="icon" href="{{ url_for('static', filename='cs50.ico') }}" type="image/x-icon">
+        <link rel="stylesheet" href="{{ url_for('static', filename='submit_page.css') }}">
 
-        <title>Bigboard - CS50x Speller Benchmark</title>
 
         <script src="{{ url_for('static', filename='table_colors.js') }}" defer></script>
         <script src="{{ url_for('static', filename='profile.js') }}" defer></script>
-
-        {% block extra_head %}{% endblock %}
-
+        <script src="{{ url_for('static', filename='submit_page.js') }}" defer></script>
     </head>
 
     <body>
-
         <nav class="navbar navbar-expand-lg custom-navbar">
             <div class="container-fluid">
 
@@ -57,7 +55,6 @@
         <main>
             {% block main %}{% endblock %}
         </main>
-
     </body>
-
+    
 </html>
