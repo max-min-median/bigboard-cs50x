@@ -15,6 +15,7 @@ localDates.forEach(el => {
 });
 
 
+// Perform label edit: show/hide relevant elements
 editLabelBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const id = btn.dataset.id;
@@ -68,8 +69,8 @@ saveLabelBtns.forEach(btn => {
         labelInput.classList.add('d-none');
         labelText.classList.remove('d-none');
         row.querySelector('.btn-edit-label').classList.remove('d-none');
-        btn.classList.add('d-none');
         row.querySelector('.btn-cancel-label').classList.add('d-none');
+        btn.classList.add('d-none');
     });
 });
 
@@ -91,8 +92,9 @@ deleteBtns.forEach(btn => {
         try {
             const res = await fetch(`/submission/${id}/delete`, { method: 'POST' });
             if (!res.ok) throw new Error();
-            document.getElementById('row-' + id).remove();
+            // Note: the table rows don't get renumbered, I don't think we need to overcomplicate things
             const data = await res.json();
+            document.getElementById('row-' + id).remove();
             savedCountSpan.textContent = data.saved_count;
         } catch {
             alert('Failed to delete submission. Please try again.');
