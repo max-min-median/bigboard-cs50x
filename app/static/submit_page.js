@@ -18,7 +18,8 @@ dividerDiv.style.marginTop = (codeLabel.getBoundingClientRect().height + labelGa
 
 // Disable benchmark button when no code in textarea
 codeInput.addEventListener('input', function() {
-    submitBtn.disabled = codeInput.value.trim() === '';
+    const isLoggedIn = submitBtn.getAttribute('data-logged-in') === 'true';
+    submitBtn.disabled = !isLoggedIn || codeInput.value.trim() === '';
 });
 
 // show or hide textarea for dictionary.h, reset settings when checked

@@ -9,10 +9,9 @@ from flask import (
     session,
 )
 from flask_login import current_user, login_required, login_user
-from werkzeug.security import check_password_hash, generate_password_hash
-
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import queue_worker
 from .config import SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, SUBMISSIONS_MAX_PER_USER
@@ -24,9 +23,8 @@ main = Blueprint("main", __name__)
 
 
 @main.route("/")
-@login_required
 def index():
-    return redirect("/submit")
+    return render_template("index.html")
 
 
 @main.route("/login", methods=["POST", "GET"])
@@ -67,7 +65,7 @@ def login():
 def logout():
     """Log user out."""
     session.clear()
-    return redirect("/login")
+    return redirect("/")
 
 
 @main.route("/register", methods=["POST", "GET"])
@@ -82,7 +80,8 @@ def register():
 
         if not all([username, password, confirmation]):
             return render_template(
-                "error.html", message="Must provide username, password, and/or confirmation"
+                "error.html",
+                message="Must provide username, password, and/or confirmation",
             )
 
         if password != confirmation:
@@ -111,23 +110,19 @@ def register():
         return render_template("register.html")
 
 
-@main.route("/submit", methods=["POST", "GET"])
+@main.route("/submit", methods=["POST"])
 @login_required
 def submit():
     """Let user submit code."""
-    if request.method == "POST":
-        data = request.get_json()
-        if not data or "code" not in data:
-            return jsonify({"error": "No code received."}), 400
+    data = request.get_json()
+    if not data or "code" not in data:
+        return jsonify({"error": "No code received."}), 400
 
-        code = data["code"]
-        header = data.get("header", "")
+    code = data["code"]
+    header = data.get("header", "")
 
-        item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
-        return jsonify({"submission_id": item.submission_id})
-
-    else:
-        return render_template("submit.html")
+    item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
+    return jsonify({"submission_id": item.submission_id})
 
 
 @main.route("/leaderboard")
@@ -137,8 +132,7 @@ def leaderboard():
 
     best_per_user = (
         db.session.query(
-            Submission.user_id,
-            func.max(Submission.total_average).label("best")
+            Submission.user_id, func.max(Submission.total_average).label("best")
         )
         .group_by(Submission.user_id)
         .subquery()
@@ -158,15 +152,17 @@ def leaderboard():
         .order_by(Submission.total_average.desc())
     )
 
-    pagination = query.paginate(page=page, per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, error_out=False)
+    pagination = query.paginate(
+        page=page, per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, error_out=False
+    )
 
     if page > pagination.pages > 0:
         return redirect(f"/leaderboard?page={pagination.pages}")
 
     return render_template(
-        "leaderboard.html", 
-        pagination=pagination, 
-        per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE
+        "leaderboard.html",
+        pagination=pagination,
+        per_page=SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE,
     )
 
 
@@ -175,18 +171,24 @@ def leaderboard():
 def profile():
     """Show current user's submissions."""
     submissions = (
-        Submission.query
-        .filter_by(user_id=current_user.id)
+        Submission.query.filter_by(user_id=current_user.id)
         .order_by(Submission.total_average.desc())
         .all()
     )
-    return render_template("profile.html", user=current_user, submissions=submissions, max_submissions=SUBMISSIONS_MAX_PER_USER)
+    return render_template(
+        "profile.html",
+        user=current_user,
+        submissions=submissions,
+        max_submissions=SUBMISSIONS_MAX_PER_USER,
+    )
 
 
 @main.route("/submission/<int:submission_id>/delete", methods=["POST"])
 @login_required
 def delete_submission(submission_id: int):
-    submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
+    submission = Submission.query.filter_by(
+        id=submission_id, user_id=current_user.id
+    ).first_or_404()
     db.session.delete(submission)
     db.session.commit()
     saved_count = Submission.query.filter_by(user_id=current_user.id).count()
@@ -196,7 +198,9 @@ def delete_submission(submission_id: int):
 @main.route("/submission/<int:submission_id>/label", methods=["POST"])
 @login_required
 def edit_label(submission_id: int):
-    submission = Submission.query.filter_by(id=submission_id, user_id=current_user.id).first_or_404()
+    submission = Submission.query.filter_by(
+        id=submission_id, user_id=current_user.id
+    ).first_or_404()
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data received."}), 400
@@ -206,6 +210,7 @@ def edit_label(submission_id: int):
 
 
 @main.route("/status/<submission_id>")
+@login_required
 def status(submission_id: str):
     """Return status of submission."""
     result = queue_worker.get_status(submission_id)
