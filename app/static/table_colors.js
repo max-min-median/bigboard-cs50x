@@ -9,20 +9,20 @@ benchCells.forEach(cell => {
 });
 
 Object.values(columns).forEach(cells => {
-    const values = cells.map(c => parseFloat(c.textContent));
+    const values = cells.map(cell => parseFloat(cell.textContent));
     const min = Math.min(...values);
     const max = Math.max(...values);
 
     cells.forEach((cell, i) => {
         const v = values[i];
         if (min === max || v === max) {
-            cell.style.backgroundColor = 'rgba(13, 110, 253, 0.35)';
+            // Blue background for best score in column
+            cell.style.backgroundColor = 'rgba(10, 80, 255, 0.45)';
         } else {
             const t = (v - min) / (max - min);
-            const r = Math.round(lerp(220, 25, t));
-            const g = Math.round(lerp(53, 135, t));
-            const b = Math.round(lerp(69, 84, t));
-            cell.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.35)`;
+            const r = Math.round(lerp(220, 20, t));
+            const g = Math.round(lerp(50, 135, t));
+            cell.style.backgroundColor = `rgba(${r}, ${g}, 75, 0.45)`;
         }
     });
 });
