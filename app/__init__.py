@@ -4,9 +4,8 @@ from logging.handlers import RotatingFileHandler
 
 import colorlog
 from flask import Flask, jsonify, redirect, request, url_for
-from flask_login import LoginManager
-
 from flask_assets import Bundle, Environment
+from flask_login import LoginManager
 from flask_session import Session
 
 from .config import BASE_DIR, DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
@@ -21,11 +20,32 @@ def create_app() -> Flask:
     log = logging.getLogger(__name__)
 
     app = Flask(__name__)
-
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
+    init_login_manager(app)
+    # config for flask-assets to handle serving .css and .js
+    init_static_bundling(app)
+
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+
+    app.register_blueprint(main)
+
+    # compiles the benchmark executable and creates some necessary symlinks
+    result = spin_container(speller_perms="rw", mount_workspace=True, flags=["--initialize"])
+    log.info(result.stdout + result.stderr)
+    if result.returncode != 0:
+        log.error("Error while spinning up container during app initialization")
+        sys.exit(1)
+
+    start_queue_worker(app)
+    return app
+
+
+def init_login_manager(app: Flask) -> None:
     login_manager = LoginManager()
     login_manager.login_view = "main.login"
     login_manager.init_app(app)
@@ -45,36 +65,20 @@ def create_app() -> Flask:
     app.config["SESSION_TYPE"] = "filesystem"
     Session(app)
 
-    # Bundle .js and .css files together using flask-assets library to reduce server requests
+
+def init_static_bundling(app: Flask) -> None:
+    """ 
+    Bundle .js and .css together into single files using flask-assets library to reduce server requests
     # To enable minification, install cssmin and rjsmin (pip install cssmin rjsmin) and use:
     # assets.register("css_bundled", Bundle(*css_files, filters="cssmin", output="bundled/all.css"))
     # assets.register("js_bundled", Bundle(*js_files, filters="rjsmin", output="bundled/all.js"))
+    """
     static_dir = BASE_DIR / "app" / "static"
     css_files = [f.name for f in static_dir.glob("*.css")]
     js_files = [f.name for f in static_dir.glob("*.js")]
     assets = Environment(app)
     assets.register("css_bundled", Bundle(*css_files, output="bundled/all.css"))
-    assets.register("js_bundled", Bundle(*js_files, output="bundled/all.js"))
-
-    # 
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-
-    app.register_blueprint(main)
-
-    # compiles the benchmark executable and creates some necessary symlinks
-    result = spin_container(
-        speller_perms="rw", mount_workspace=True, flags=["--initialize"]
-    )
-    log.info(result.stdout + result.stderr)
-    if result.returncode != 0:
-        log.error("Error while spinning up container during app initialization")
-        sys.exit(1)
-
-    start_queue_worker(app)
-
-    return app
+    assets.register("js_bundled", Bundle(*js_files, output="bundled/all.js"))    
 
 
 def setup_logging() -> None:
