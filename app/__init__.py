@@ -3,12 +3,12 @@ import sys
 from logging.handlers import RotatingFileHandler
 
 import colorlog
-from flask import Flask
+from flask import Flask, jsonify, redirect, request, url_for
 from flask_login import LoginManager
 
 from flask_session import Session
 
-from .config import SECRET_KEY, DATABASE_URL, MAX_CONTENT_LENGTH
+from .config import DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
 from .container import spin_container
 from .models import User, db
 from .queue_worker import start_queue_worker
@@ -32,6 +32,12 @@ def create_app() -> Flask:
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        if request.is_json or request.path == url_for("main.submit"):
+            return jsonify({"error": "Authentication failed, please log in."}), 401
+        return redirect(url_for("main.login"))
 
     # Configure session
     app.config["SESSION_PERMANENT"] = False
