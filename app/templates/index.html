@@ -38,12 +38,11 @@
                         data-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}">
                     Submit
                 </button>
-                <div id="queue-status" hidden></div>
             </div>
         </form>
 
         <div id="output-area">
-            <pre id="output"></pre>
+            <pre id="output">{% if not current_user.is_authenticated %}Please log in to benchmark your speller code.{% endif %}</pre>
         </div>
     </div>
 

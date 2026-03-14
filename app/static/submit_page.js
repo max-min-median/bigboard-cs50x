@@ -8,7 +8,6 @@ const headerInput = document.getElementById('header-input');
 const dividerDiv = document.getElementById('textarea-divider');
 const textareasContainer = document.getElementById('textareas-container');
 const codeGroup = document.querySelector('.textarea-group');
-const queueStatus = document.getElementById('queue-status');
 
 
 // Push divider down so it aligns with the textareas, not the labels
@@ -72,9 +71,7 @@ submitForm.addEventListener('submit', async function(e) {
     submitBtn.disabled = true;
     codeInput.disabled = true;
     headerInput.disabled = true;
-    outputDiv.textContent = '';
-    queueStatus.hidden = false;
-    queueStatus.textContent = 'Submitting...';
+    outputDiv.textContent = 'Submitting...';
 
     let submissionId = null;
     try {
@@ -92,7 +89,6 @@ submitForm.addEventListener('submit', async function(e) {
         }
         submissionId = data.submission_id;
     } catch (err) {
-        queueStatus.hidden = true;
         outputDiv.textContent = 'Error: ' + err.message;
         submitBtn.disabled = false; // TODO group these lines together in a function, repeated a bunch
         codeInput.disabled = false;
@@ -107,14 +103,13 @@ submitForm.addEventListener('submit', async function(e) {
             const data = await res.json();
 
             if (data.status === 'pending') {
-                queueStatus.textContent = `${data.position} submission(s) ahead of you...`;
+                outputDiv.textContent = `${data.position} submission(s) ahead of you...`;
             } else if (data.status === 'compiling') {
-                queueStatus.textContent = 'Compiling code...';
+                outputDiv.textContent = 'Compiling code...';
             } else if (data.status === 'running') {
-                queueStatus.textContent = 'Running benchmarks...';
+                outputDiv.textContent = 'Running benchmarks...';
             } else if (data.status === 'done' || data.status === 'error') {
                 clearInterval(pollInterval);
-                queueStatus.hidden = true;
                 outputDiv.textContent = data.output;
                 submitBtn.disabled = false;
                 codeInput.disabled = false;
@@ -122,7 +117,6 @@ submitForm.addEventListener('submit', async function(e) {
             }
         } catch (err) {
             clearInterval(pollInterval);
-            queueStatus.hidden = true;
             outputDiv.textContent = 'Error: could not reach server.';
             submitBtn.disabled = false;
             codeInput.disabled = false;
