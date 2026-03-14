@@ -14,7 +14,11 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import queue_worker
-from .config import SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, SUBMISSIONS_MAX_PER_USER
+from .config import (
+    SUBMISSIONS_LEADERBOARD_ITEMS_PER_PAGE, 
+    SUBMISSIONS_MAX_PER_USER, 
+    SUBMISSION_POLL_INTERVAL_MS
+)
 from .models import Submission, User, db
 
 log = logging.getLogger(__name__)
@@ -24,7 +28,7 @@ main = Blueprint("main", __name__)
 
 @main.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", poll_interval=SUBMISSION_POLL_INTERVAL_MS)
 
 
 @main.route("/login", methods=["POST", "GET"])

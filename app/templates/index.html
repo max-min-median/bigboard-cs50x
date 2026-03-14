@@ -1,11 +1,5 @@
 {% extends "layout.html" %}
 
-{% block extra_head %}
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='submit_page.css') }}">
-
-{% endblock %}
-
 {% block main %}
 
     <div id="submit-page-container">
@@ -43,7 +37,8 @@
                         class="submit-code-button"
                         id="submit-btn"
                         disabled
-                        data-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}">
+                        data-logged-in="{{ 'true' if current_user.is_authenticated else 'false' }}"
+                        data-poll-interval="{{ poll_interval }}">
                     Submit
                 </button>
             </div>
@@ -53,7 +48,5 @@
             <pre id="output">{% if not current_user.is_authenticated %}Please log in to benchmark your speller code.{% endif %}</pre>
         </div>
     </div>
-
-    <script src="{{ url_for('static', filename='submit_page.js') }}"></script>
 
 {% endblock %}

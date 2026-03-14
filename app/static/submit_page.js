@@ -165,6 +165,5 @@ submitForm.addEventListener('submit', async function(e) {
             codeInput.disabled = false;
             headerInput.disabled = false;
         }
-    }, 750);
-    // TODO reminder: externalize polling interval in .env file, would be a useful adjustable setting
+    }, parseInt(submitBtn.dataset.pollInterval, 10));
 });
