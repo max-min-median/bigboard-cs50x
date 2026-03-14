@@ -9,6 +9,8 @@ const dividerDiv = document.getElementById('textarea-divider');
 const textareasContainer = document.getElementById('textareas-container');
 const codeGroup = document.querySelector('.textarea-group');
 
+// Since all .js bundled together, make sure this doesn't run on non-submission pages
+if (codeGroup) {
 
 // Push divider down so it aligns with the textareas, not the labels
 const codeLabelRow = codeGroup.querySelector('.textarea-label-row');
@@ -167,3 +169,5 @@ submitForm.addEventListener('submit', async function(e) {
         }
     }, parseInt(submitBtn.dataset.pollInterval, 10));
 });
+
+} // end codeGroup guard
