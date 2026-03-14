@@ -19,13 +19,21 @@
         <form id="submit-form">
             <div id="textareas-container">
                 <div class="textarea-group">
-                    <label for="code-input">Paste your <code>dictionary.c</code> below:</label>
+                    <div class="textarea-label-row">
+                        <label for="code-input">Paste your <code>dictionary.c</code> below or</label>
+                        <button type="button" class="upload-btn" onclick="document.getElementById('code-file-input').click()">Upload</button>
+                        <input type="file" id="code-file-input" accept=".c,.h,.txt" hidden>
+                    </div>
                     <textarea id="code-input" name="code" placeholder="// your dictionary.c here..."
                         spellcheck="false"></textarea>
                 </div>
                 <div id="textarea-divider" hidden></div>
                 <div class="textarea-group" id="header-group" hidden>
-                    <label for="header-input">Paste your <code>dictionary.h</code> below:</label>
+                    <div class="textarea-label-row">
+                        <label for="header-input">Paste your <code>dictionary.h</code> below or</label>
+                        <button type="button" class="upload-btn" onclick="document.getElementById('header-file-input').click()">Upload</button>
+                        <input type="file" id="header-file-input" accept=".c,.h,.txt" hidden>
+                    </div>
                     <textarea id="header-input" name="header" placeholder="// your dictionary.h here..."
                         spellcheck="false"></textarea>
                 </div>

@@ -11,9 +11,52 @@ const codeGroup = document.querySelector('.textarea-group');
 
 
 // Push divider down so it aligns with the textareas, not the labels
-const codeLabel = codeGroup.querySelector('label');
+const codeLabelRow = codeGroup.querySelector('.textarea-label-row');
 const labelGap = parseFloat(getComputedStyle(codeGroup).gap) || 0;
-dividerDiv.style.marginTop = (codeLabel.getBoundingClientRect().height + labelGap) + 'px';
+dividerDiv.style.marginTop = (codeLabelRow.getBoundingClientRect().height + labelGap) + 'px';
+
+// File upload handlers
+function loadFileIntoTextarea(inputId, textarea) {
+    const fileInput = document.getElementById(inputId);
+    fileInput.addEventListener('change', function() {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            textarea.value = e.target.result;
+            textarea.dispatchEvent(new Event('input'));
+        };
+        reader.readAsText(file);
+        fileInput.value = '';
+    });
+}
+loadFileIntoTextarea('code-file-input', codeInput);
+loadFileIntoTextarea('header-file-input', headerInput);
+
+// Drag-and-drop into textareas
+function enableFileDrop(textarea) {
+    textarea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        textarea.classList.add('drag-over');
+    });
+    textarea.addEventListener('dragleave', function() {
+        textarea.classList.remove('drag-over');
+    });
+    textarea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        textarea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            textarea.value = ev.target.result;
+            textarea.dispatchEvent(new Event('input'));
+        };
+        reader.readAsText(file);
+    });
+}
+enableFileDrop(codeInput);
+enableFileDrop(headerInput);
 
 // Disable benchmark button when no code in textarea
 codeInput.addEventListener('input', function() {
