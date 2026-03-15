@@ -45,14 +45,14 @@ def login():
 
         # Validate whether username and password were submitted or not
         if not username or not password:
-            return render_template("error.html", message="Must provide username and password")
+            return render_template("login.html", error="Must provide username and password.")
 
         # Query database for user
         user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
 
         # Check whether user exists and password is correct
         if not user or not check_password_hash(user.password_hash, password):
-            return render_template("error.html", message="Invalid username and/or password")
+            return render_template("login.html", error="Invalid username and/or password.")
 
         login_user(user)
         return redirect("/")

@@ -12,6 +12,10 @@
             </div>
             <button type="submit">Log In</button>
         </form>
+
+        {% if error %}
+            <div id="registration-error" class="text-danger small mt-3">{{ error }}</div>
+        {% endif %}
     </div>
 
 {% endblock %}
