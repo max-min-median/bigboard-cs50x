@@ -121,6 +121,9 @@ def register() -> str | Response:
 @main.route("/submit", methods=["POST"])
 @login_required
 def submit() -> Response | tuple[Response, int]:
+    if queue_worker.queue_limit_reached(current_user.id):
+        return jsonify({"error": "Please wait for your other queued submissions to complete."}), 429
+
     data = request.get_json()
     if not data or "code" not in data:
         return jsonify({"error": "No code received."}), 400

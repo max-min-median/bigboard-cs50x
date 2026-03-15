@@ -1,4 +1,4 @@
-// csrfToken is needed in multiple scripts, but only defined here single the .js gets bundled
+// csrfToken is needed in multiple scripts, but only defined here since the .js gets bundled
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const submitForm = document.getElementById('submit-form');
 const codeInput = document.getElementById('code-input');
