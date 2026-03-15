@@ -33,6 +33,9 @@ def index():
 
 @main.route("/login", methods=["POST", "GET"])
 def login():
+    if current_user.is_authenticated:
+      return redirect("/")
+    
     if request.method == "POST":
         # Forget any user_id
         session.clear()
@@ -68,6 +71,9 @@ def logout():
 
 @main.route("/register", methods=["POST", "GET"])
 def register():
+    if current_user.is_authenticated:
+        return redirect("/")
+    
     if request.method == "POST":
         session.clear()
 
@@ -115,9 +121,12 @@ def submit():
 
     code = data["code"]
     header = data.get("header", "")
-
-    item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
-    return jsonify({"submission_id": item.submission_id})
+    try:
+        item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
+        return jsonify({"submission_id": item.submission_id})
+    except Exception as e:
+        log.exception(e)
+        return jsonify({"error": "Unexpected server error, please try again shortly."}), 500
 
 
 @main.route("/leaderboard")
@@ -193,7 +202,7 @@ def delete_submission(submission_id: int):
     except Exception as e:
         db.session.rollback()
         log.exception(e)
-        return jsonify({"error": "Couldn't delete submission, please try again."}), 500
+        return jsonify({"error": "Could not delete submission, please try again."}), 500
 
 
 @main.route("/submission/<int:submission_id>/label", methods=["POST"])
@@ -205,10 +214,15 @@ def edit_label(submission_id: int):
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data received."}), 400
-    submission.label = (data.get("label") or "")[:100]
-    db.session.commit()
-    return jsonify({"ok": True})
-
+    try:
+        submission.label = (data.get("label") or "")[:100]
+        db.session.commit()
+        return jsonify({"ok": True})
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
+        return jsonify({"error": "Could not edit label data, please try again." }), 500
+        
 
 @main.route("/status/<submission_id>")
 @login_required
