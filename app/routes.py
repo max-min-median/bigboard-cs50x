@@ -2,6 +2,7 @@ import logging
 
 from flask import (
     Blueprint,
+    Response,
     jsonify,
     redirect,
     render_template,
@@ -27,12 +28,12 @@ main = Blueprint("main", __name__)
 
 
 @main.route("/")
-def index():
+def index() -> str:
     return render_template("index.html", poll_interval=SUBMISSION_POLL_INTERVAL_MS)
 
 
 @main.route("/login", methods=["POST", "GET"])
-def login():
+def login() -> str | Response:
     if current_user.is_authenticated:
       return redirect("/")
     
@@ -63,14 +64,14 @@ def login():
 
 @main.route("/logout")
 @login_required
-def logout():
+def logout() -> Response:
     session.clear()
     logout_user()
     return redirect("/")
 
 
 @main.route("/register", methods=["POST", "GET"])
-def register():
+def register() -> str | Response:
     if current_user.is_authenticated:
         return redirect("/")
     
@@ -119,7 +120,7 @@ def register():
 
 @main.route("/submit", methods=["POST"])
 @login_required
-def submit():
+def submit() -> Response | tuple[Response, int]:
     data = request.get_json()
     if not data or "code" not in data:
         return jsonify({"error": "No code received."}), 400
@@ -135,7 +136,7 @@ def submit():
 
 
 @main.route("/leaderboard")
-def leaderboard():
+def leaderboard() -> str | Response:
     """Show leaderboard — one best submission per user, paginated."""
     page = max(1, request.args.get("page", 1, type=int))
 
@@ -177,7 +178,7 @@ def leaderboard():
 
 @main.route("/profile")
 @login_required
-def profile():
+def profile() -> str:
     """Show current user's submissions."""
     submissions = db.session.scalars(
         db.select(Submission).
@@ -193,7 +194,7 @@ def profile():
 
 @main.route("/submission/<int:submission_id>/delete", methods=["POST"])
 @login_required
-def delete_submission(submission_id: int):
+def delete_submission(submission_id: int) -> Response | tuple[Response, int]:
     submission = db.first_or_404(
         db.select(Submission).filter_by(id=submission_id, user_id=current_user.id)
     )
