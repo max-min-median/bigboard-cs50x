@@ -83,17 +83,20 @@ def register():
 
         if not all((username, password, confirmation)):
             return render_template(
-                "error.html",
-                message="Must provide username, password, and/or confirmation",
+                "register.html",
+                error="Must provide username, password, confirmation.",
+                username=username,
             )
 
         if password != confirmation:
-            return render_template("error.html", message="Password and confirmation must match")
+            return render_template(
+                "register.html", error="Password and confirmation must match.", username=username
+            )
 
         existing_user = db.session.execute(
             db.select(User).filter_by(username=username)).scalar_one_or_none()
         if existing_user:
-            return render_template("error.html", message="Username already taken")
+            return render_template("register.html", error="Username already taken.", username=username)
 
         new_user = User(username=username, password_hash=generate_password_hash(password))
 
@@ -106,7 +109,9 @@ def register():
         except Exception as e:
             db.session.rollback()
             log.exception(e)
-            return render_template("error.html", message="Database error")
+            return render_template(
+                "register.html", error="Something went wrong, please try again.", username=username
+            )
 
     else:
         return render_template("register.html")
