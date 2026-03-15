@@ -72,24 +72,23 @@ def _save_submission(item: QueueItem, results: dict[str, float]) -> None:
     user.total_submissions += 1
 
     # Enforce cap: delete worst submission if at the limit
-    existing = (
-        Submission.query
+    existing = db.session.scalars(
+        db.select(Submission)
         .filter_by(user_id=item.user_id)
         .order_by(Submission.total_average.desc())
-        .all()
-    )
+    ).all()
     if len(existing) >= SUBMISSIONS_MAX_PER_USER:
         db.session.delete(existing[0])
 
-    submission = Submission(
-        submission_id=item.submission_id,
-        user_id=item.user_id,
-        **results
-    )
-    db.session.add(submission)
-    db.session.commit()
-    log.info("Saved submission %s for user %d (lifetime total: %d)",
-             item.submission_id, item.user_id, user.total_submissions)
+    submission = Submission(submission_id=item.submission_id, user_id=item.user_id, **results)
+    try:
+        db.session.add(submission)
+        db.session.commit()
+        log.info("Saved submission %s for user %d (lifetime total: %d)",
+            item.submission_id, item.user_id, user.total_submissions)
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
 
 
 def _process_item(item: QueueItem) -> None:

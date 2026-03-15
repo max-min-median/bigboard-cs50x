@@ -8,7 +8,7 @@ from flask import (
     request,
     session,
 )
-from flask_login import current_user, login_required, login_user
+from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,31 +33,25 @@ def index():
 
 @main.route("/login", methods=["POST", "GET"])
 def login():
-    """Log user in."""
     if request.method == "POST":
         # Forget any user_id
         session.clear()
 
-        username = request.form.get("username").strip()
+        username = (request.form.get("username") or "").strip()
         password = request.form.get("password")
 
         # Validate whether username and password were submitted or not
         if not username or not password:
-            return render_template(
-                "error.html", message="Must provide username and password"
-            )
+            return render_template("error.html", message="Must provide username and password")
 
         # Query database for user
-        user = User.query.filter_by(username=username).first()
+        user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
 
         # Check whether user exists and password is correct
         if not user or not check_password_hash(user.password_hash, password):
-            return render_template(
-                "error.html", message="Invalid username and/or password"
-            )
+            return render_template("error.html", message="Invalid username and/or password")
 
         login_user(user)
-
         return redirect("/")
 
     else:
@@ -67,38 +61,35 @@ def login():
 @main.route("/logout")
 @login_required
 def logout():
-    """Log user out."""
     session.clear()
+    logout_user()
     return redirect("/")
 
 
 @main.route("/register", methods=["POST", "GET"])
 def register():
-    """Register user."""
     if request.method == "POST":
         session.clear()
 
-        username = request.form.get("username").strip()
+        username = (request.form.get("username") or "").strip()
         password = request.form.get("password")
         confirmation = request.form.get("confirmation")
 
-        if not all([username, password, confirmation]):
+        if not all((username, password, confirmation)):
             return render_template(
                 "error.html",
                 message="Must provide username, password, and/or confirmation",
             )
 
         if password != confirmation:
-            return render_template(
-                "error.html", message="Password and confirmation must match"
-            )
+            return render_template("error.html", message="Password and confirmation must match")
 
-        existing_user = User.query.filter_by(username=username).first()
+        existing_user = db.session.execute(
+            db.select(User).filter_by(username=username)).scalar_one_or_none()
         if existing_user:
             return render_template("error.html", message="Username already taken")
 
-        password_hash = generate_password_hash(password)
-        new_user = User(username=username, password_hash=password_hash)
+        new_user = User(username=username, password_hash=generate_password_hash(password))
 
         try:
             db.session.add(new_user)
@@ -106,8 +97,9 @@ def register():
             login_user(new_user)
 
             return redirect("/")
-        except Exception as _:
+        except Exception as e:
             db.session.rollback()
+            log.exception(e)
             return render_template("error.html", message="Database error")
 
     else:
@@ -117,7 +109,6 @@ def register():
 @main.route("/submit", methods=["POST"])
 @login_required
 def submit():
-    """Let user submit code."""
     data = request.get_json()
     if not data or "code" not in data:
         return jsonify({"error": "No code received."}), 400
@@ -174,14 +165,13 @@ def leaderboard():
 @login_required
 def profile():
     """Show current user's submissions."""
-    submissions = (
-        Submission.query.filter_by(user_id=current_user.id)
-        .order_by(Submission.total_average.desc())
-        .all()
-    )
+    submissions = db.session.scalars(
+        db.select(Submission).
+        filter_by(user_id=current_user.id).
+        order_by(Submission.total_average.desc())
+    ).all()
     return render_template(
         "profile.html",
-        user=current_user,
         submissions=submissions,
         max_submissions=SUBMISSIONS_MAX_PER_USER,
     )
@@ -190,21 +180,28 @@ def profile():
 @main.route("/submission/<int:submission_id>/delete", methods=["POST"])
 @login_required
 def delete_submission(submission_id: int):
-    submission = Submission.query.filter_by(
-        id=submission_id, user_id=current_user.id
-    ).first_or_404()
-    db.session.delete(submission)
-    db.session.commit()
-    saved_count = Submission.query.filter_by(user_id=current_user.id).count()
-    return jsonify({"ok": True, "saved_count": saved_count})
+    submission = db.first_or_404(
+        db.select(Submission).filter_by(id=submission_id, user_id=current_user.id)
+    )
+    try:
+        db.session.delete(submission)
+        db.session.commit()
+        saved_count = db.session.scalar(
+            db.select(func.count()).select_from(Submission).filter_by(user_id=current_user.id)
+        )
+        return jsonify({"ok": True, "saved_count": saved_count})
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
+        return jsonify({"error": "Couldn't delete submission, please try again."}), 500
 
 
 @main.route("/submission/<int:submission_id>/label", methods=["POST"])
 @login_required
 def edit_label(submission_id: int):
-    submission = Submission.query.filter_by(
-        id=submission_id, user_id=current_user.id
-    ).first_or_404()
+    submission = db.first_or_404(
+        db.select(Submission).filter_by(id=submission_id, user_id=current_user.id)
+    )
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data received."}), 400
@@ -216,7 +213,6 @@ def edit_label(submission_id: int):
 @main.route("/status/<submission_id>")
 @login_required
 def status(submission_id: str):
-    """Return status of submission."""
     result = queue_worker.get_status(submission_id)
     if result is None:
         return jsonify({"error": "Unknown submission ID."}), 404
