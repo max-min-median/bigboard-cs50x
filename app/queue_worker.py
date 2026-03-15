@@ -98,7 +98,7 @@ def _save_submission(item: QueueItem, results: dict[str, float]) -> None:
         .order_by(Submission.total_average.desc())
     ).all()
     if len(existing) >= SUBMISSIONS_MAX_PER_USER:
-        db.session.delete(existing[0])
+        db.session.delete(existing[-1])
 
     submission = Submission(submission_id=item.submission_id, user_id=item.user_id, **results)
     try:
