@@ -71,7 +71,9 @@ def _execute_benchmark(item: QueueItem) -> BenchmarkResult:
         signature = item.submission_id
 
         result = spin_container(parameters=["-c",
-            f"cd /speller && ./speller4 -i {ITERATIONS} -s {signature} texts",
+            f"cd /speller && "
+            f"((nm dictionary.o | grep -G -q \"[TW] clock_gettime\") && echo \"[Error] clock_gettime symbol definition found in dictionary.o\" && "
+            f"./speller4 -i {ITERATIONS} -s {signature} texts",
         ])
 
         if result.stderr:
