@@ -86,7 +86,7 @@ labelInputs.forEach(input => {
 // Delete: remove submission row from db
 deleteBtns.forEach(btn => {
     btn.addEventListener('click', async () => {
-        if (!confirm('Delete this submission?')) return;
+        if (!confirm('Permanently delete this submission?')) return;
 
         const id = btn.dataset.id;
         try {

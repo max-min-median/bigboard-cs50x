@@ -188,10 +188,31 @@ def profile() -> str:
         filter_by(user_id=current_user.id).
         order_by(Submission.total_average.desc())
     ).all()
+
+    rank = None
+    total_ranked_users = 0
+    if submissions:
+        user_best = submissions[0].total_average  # already ordered desc
+        best_per_user = (
+            db.session.query(func.max(Submission.total_average).label("best"))
+            .group_by(Submission.user_id)
+            .subquery()
+        )
+        users_ahead = db.session.scalar(
+            db.select(func.count()).select_from(best_per_user)
+            .where(best_per_user.c.best > user_best)
+        )
+        rank = users_ahead + 1
+        total_ranked_users = db.session.scalar(
+            db.select(func.count(func.distinct(Submission.user_id)))
+        )
+
     return render_template(
         "profile.html",
         submissions=submissions,
         max_submissions=SUBMISSIONS_MAX_PER_USER,
+        rank=rank,
+        total_ranked_users=total_ranked_users,
     )
 
 
