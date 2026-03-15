@@ -56,7 +56,7 @@ saveLabelBtns.forEach(btn => {
         try {
             const res = await fetch(`/submission/${id}/label`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ label: newLabel })
             });
             if (!res.ok) throw new Error();
@@ -90,7 +90,8 @@ deleteBtns.forEach(btn => {
 
         const id = btn.dataset.id;
         try {
-            const res = await fetch(`/submission/${id}/delete`, { method: 'POST' });
+            const res = await fetch(
+                `/submission/${id}/delete`, { method: 'POST', headers: { 'X-CSRFToken': csrfToken } });
             if (!res.ok) throw new Error();
             // Note: the table rows don't get renumbered, I don't think we need to overcomplicate things
             const data = await res.json();

@@ -6,6 +6,7 @@ import colorlog
 from flask import Flask, jsonify, redirect, request, url_for
 from flask_assets import Bundle, Environment
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 
 from .config import *
 from .container import spin_container
@@ -23,6 +24,7 @@ def create_app() -> Flask:
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
+    CSRFProtect(app)
     init_login_manager(app)
     # config for flask-assets to handle serving .css and .js
     init_static_bundling(app)

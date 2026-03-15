@@ -4,6 +4,7 @@
 
     <div class="container py-5 text-center" id="registration-form">
         <form action="/register" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Username field -->
             <div class="mb-3">

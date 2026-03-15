@@ -1,3 +1,5 @@
+// csrfToken is needed in multiple scripts, but only defined here single the .js gets bundled
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const submitForm = document.getElementById('submit-form');
 const codeInput = document.getElementById('code-input');
 const outputDiv = document.getElementById('output');
@@ -122,7 +124,7 @@ submitForm.addEventListener('submit', async function(e) {
     try {
         const response = await fetch('/submit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 code: codeInput.value,
                 header: useDistCheckbox.checked ? '' : headerInput.value
