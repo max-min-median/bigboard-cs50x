@@ -21,8 +21,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-]
+prod = ["gunicorn>=25.1.0"]
 
 [tool.setuptools]
 packages = ["app"]
