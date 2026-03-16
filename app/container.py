@@ -47,6 +47,7 @@ def spin_container(
         "--cap-drop", "ALL",
         "--pids-limit", CONTAINER_PID_LIMIT,
         "--security-opt", "no-new-privileges",
+        "--user", CONTAINER_USER_ID,
         "--ulimit", CONTAINER_FSIZE_LIMIT,
     ] + mounts + [
         "--entrypoint", entrypoint,
