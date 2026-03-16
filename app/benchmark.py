@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 import logging
 import subprocess
 import re
-from .config import BASE_DIR, SPELLER, SPELLER_WS, SPELLER_BASENAME, BENCHMARK_BASENAME, ITERATIONS
+from .config import BASE_DIR, SPELLER, SPELLER_WS, ITERATIONS
 from .container import spin_container
 from .models import QueueItem
 
@@ -43,10 +43,8 @@ def _prepare_submission_files(item: QueueItem) -> None:
             f.write(item.header)
     else:
         # if no dictionary.h submitted, use the distribution code version
-        try:
-            header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h", target_is_directory=False)
-        except FileExistsError:
-            pass
+        header_file.unlink(missing_ok=True)
+        header_file.symlink_to(f"/{SPELLER_WS}/distribution_dictionary.h", target_is_directory=False)
 
 
 def _compile_submission(item: QueueItem) -> BenchmarkResult:
