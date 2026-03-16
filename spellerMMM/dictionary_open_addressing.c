@@ -58,7 +58,6 @@ unsigned int hash(const char *word) {
 bool load(const char *dictionary) {
 
     int fd = open(dictionary, O_RDONLY);
-    int collisions = 0;
 
     if (fd == -1)
     {
@@ -77,7 +76,6 @@ bool load(const char *dictionary) {
     for (char *i = _dict, *end = _dict + sb.st_size; i < end; i++) {
         if (*i == '\n') {
             hsh = FIB(hsh);
-            if (hashtable[hsh] != 0) collisions++;
             while (hashtable[hsh] != 0) hsh = (hsh + 1) & (N - 1);
             hashtable[hsh] = word_pos;
             *i = '\0';
