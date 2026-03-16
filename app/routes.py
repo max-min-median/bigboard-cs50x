@@ -6,6 +6,7 @@ from flask import (
     jsonify,
     redirect,
     render_template,
+    url_for,
     request,
     session,
 )
@@ -35,7 +36,7 @@ def index() -> str:
 @main.route("/login", methods=["POST", "GET"])
 def login() -> str | Response:
     if current_user.is_authenticated:
-      return redirect("/")
+      return redirect(url_for("main.index"))
     
     if request.method == "POST":
         # Forget any user_id
@@ -56,7 +57,7 @@ def login() -> str | Response:
             return render_template("login.html", error="Invalid username and/or password.")
 
         login_user(user)
-        return redirect("/")
+        return redirect(url_for("main.index"))
 
     else:
         return render_template("login.html")
@@ -67,13 +68,13 @@ def login() -> str | Response:
 def logout() -> Response:
     session.clear()
     logout_user()
-    return redirect("/")
+    return redirect(url_for("main.index"))
 
 
 @main.route("/register", methods=["POST", "GET"])
 def register() -> str | Response:
     if current_user.is_authenticated:
-        return redirect("/")
+        return redirect(url_for("main.index"))
     
     if request.method == "POST":
         session.clear()
@@ -106,7 +107,7 @@ def register() -> str | Response:
             db.session.commit()
             login_user(new_user)
 
-            return redirect("/")
+            return redirect(url_for("main.index"))
         except Exception as e:
             db.session.rollback()
             log.exception(e)
@@ -170,7 +171,7 @@ def leaderboard() -> str | Response:
     )
 
     if page > pagination.pages > 0:
-        return redirect(f"/leaderboard?page={pagination.pages}")
+        return redirect(url_for("main.leaderboard", page=pagination.pages))
 
     return render_template(
         "leaderboard.html",
