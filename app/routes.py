@@ -90,6 +90,15 @@ def register() -> str | Response:
                 username=username,
             )
 
+        max_username_len = User.__table__.c.username.type.length
+        if len(username) > max_username_len:
+            return render_template("register.html",
+                error=f"Username must be {max_username_len} characters or fewer.", username=username)
+
+        if not all(c.isalnum() or c in "-_" for c in username):
+            return render_template("register.html",
+                error="Username may only contain letters, numbers, dashes, and underscores.", username=username)
+
         if password != confirmation:
             return render_template(
                 "register.html", error="Password and confirmation must match.", username=username
