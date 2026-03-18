@@ -38,12 +38,12 @@ extern const unsigned int N __attribute__((weak));
 
 #define SIZE(suf) size##suf();
 
-#define UNLOAD(suf) unloaded = unload##suf();
+#define UNLOAD(suf) unloaded = unload##suf(); clear_table##suf();
 
 // Define useful macros
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define TIMEDIFF(b, a) ((double) ((a.tv_sec * 1000000000LL + a.tv_nsec) - (b.tv_sec * 1000000000LL + b.tv_nsec)) / 1000000000.0)
-#define TIMER(str) do {clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp_##str);} while(0)
+#define TIMER(start_or_end) do {clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tp_##start_or_end);} while(0)
 #define TIME(process, suf, instructions) TIMER(start); instructions(suf) TIMER(end); CALCTIME(process, suf);
 #define CALCTIME(str, suf) do {double t = TIMEDIFF(tp_start, tp_end); tm##suf.str += t; tm##suf.str##_min = MIN(tm##suf.str##_min, t);} while(0)
 #define USAGE "[ERROR] Usage: ./"SPELLER" [-i num] [-d dict] [-v(erbose)] [-s signature] textpath1 [textpath2...]\n" 
@@ -204,7 +204,7 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
         fprintf(stderr, "[ERROR] Could not load %s.\n", dictionary);
         exit(1);
     }
-    
+
     TIME(load, _BENCH, LOAD)
     
     // Calculate dict size here, immediately after 1 load().
@@ -213,7 +213,13 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     if (tm.dict_size == 0) tm.dict_size = prev_dict_size;
     tm_BENCH.dict_size = size_BENCH() - prev_dict_size_BENCH;
     if (tm_BENCH.dict_size == 0) tm_BENCH.dict_size = prev_dict_size_BENCH;
-    
+
+    // Check that student dictionary contains same number of words as dictionary50
+    if (tm.dict_size != tm_BENCH.dict_size) {
+        fprintf(stderr, "[ERROR] Student's dictionary contains %i words instead of %i.\n", tm.dict_size, tm_BENCH.dict_size);
+        exit(1);
+    }
+
     // Try to open text
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -224,47 +230,33 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     
     // Skips printing misspellings (for more accurate timing)
     // Prepare to spell-check
-    int index = 0, words = 0;
-    char word[LENGTH + 1];
+    int words = 0;
     char *allwords = malloc(1 << 23);  // 8388608 bytes, sufficient for all provided texts
-    char *word_ptr = allwords;
+    char *word_ptr = allwords, *letter_ptr = allwords;
     char *wordlen_plus1 = malloc(1 << 21);  // stores the length of each word (space for 2097152 words)
     
     // Load spell-checkable words from text into memory.
-    char c;
-    while (fread(&c, sizeof(char), 1, file)) {
-        // Allow only alphabetical characters and apostrophes
-        if (isalpha(c) || (c == '\'' && index > 0)) {
-            // Append character to word
-            word[index] = c;
-            index++;
-            
-            // Ignore alphabetical strings too long to be words
-            if (index > LENGTH) {
-                // Consume remainder of alphabetical string
-                while (fread(&c, sizeof(char), 1, file) && isalpha(c));
-                // Prepare for new word
-                index = 0;
+    while (fread(letter_ptr, sizeof(char), 1, file)) {
+        // Only letters and apostrophes are allowed in words
+        if (isalpha(*letter_ptr) || (*letter_ptr == '\'' && letter_ptr > word_ptr)) {
+            // Ignore words longer than max length
+            if (letter_ptr - word_ptr > LENGTH) {
+                while (fread(letter_ptr, sizeof(char), 1, file) && isalpha(*letter_ptr));
+                letter_ptr = word_ptr;
+            } else {
+                letter_ptr++;
             }
-        } else if (isdigit(c)) {
+        } else if (isdigit(*letter_ptr)) {
             // Ignore words with numbers (like MS Word can). Consume remainder of alphanumeric string
-            while (fread(&c, sizeof(char), 1, file) && isalnum(c));
-            // Prepare for new word
-            index = 0;
-        } else if (index > 0) {
-            // We must have found a whole word. Terminate current word
-            word[index] = '\0';
-            
+            while (fread(letter_ptr, sizeof(char), 1, file) && isalnum(*letter_ptr));
+            letter_ptr = word_ptr;
+        } else if (letter_ptr > word_ptr) {
+            // Reached the end of a word
+            *letter_ptr = '\0';
             // Store word length in `wordlen` array
-            wordlen_plus1[words] = index + 1;
-            
-            // copy word to 'text' list of words
-            strcpy(word_ptr, word);
-            
-            // Prepare for next word
-            word_ptr += wordlen_plus1[words];
-            words++;
-            index = 0;
+            letter_ptr++;
+            wordlen_plus1[words++] = letter_ptr - word_ptr;
+            word_ptr = letter_ptr;
         }
     }
     tm.words = tm_BENCH.words = words;
@@ -281,15 +273,20 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     for (int k = 0; k < iters; k++) {
         TIME(check, , CHECK)
         TIME(check, _BENCH, CHECK)
+
+        // Check that student dictionary contains same number of words as dictionary50
+        if (tm.misspellings != tm_BENCH.misspellings) {
+            fprintf(stderr, "[ERROR] Student reported %i misspellings in \"%s\" instead of %i.\n", tm.misspellings, filename, tm_BENCH.misspellings);
+            exit(1);
+        }
     }
-    
+
     // Close text
     fclose(file);
     
     // Unload dictionary
     bool unloaded;
     TIME(unload, , UNLOAD)
-    clear_table();
     
     // Abort if dictionary not unloaded
     if (!unloaded) {
@@ -305,12 +302,11 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     // Time rest of loads and unloads
     for (int i = 1; i < iters; i++) {
         TIME(load, , LOAD)
-        TIME(load, _BENCH, LOAD)
         // TODO: add check to prevent cheating?
         TIME(size, , SIZE)
-        TIME(size, _BENCH, SIZE)
         TIME(unload, , UNLOAD)
-        clear_table();
+        TIME(load, _BENCH, LOAD)
+        TIME(size, _BENCH, SIZE)
         TIME(unload, _BENCH, UNLOAD)
     }
     
