@@ -1,3 +1,7 @@
+// csrfToken and scriptName are needed in multiple scripts, but only defined here since the .js gets bundled
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const scriptName = document.querySelector('meta[name="script-name"]').content;
+
 const submitForm = document.getElementById('submit-form');
 const codeInput = document.getElementById('code-input');
 const outputDiv = document.getElementById('output');
@@ -120,9 +124,9 @@ submitForm.addEventListener('submit', async function(e) {
 
     let submissionId = null;
     try {
-        const response = await fetch('/submit', {
+        const response = await fetch(scriptName + '/submit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 code: codeInput.value,
                 header: useDistCheckbox.checked ? '' : headerInput.value
@@ -144,7 +148,7 @@ submitForm.addEventListener('submit', async function(e) {
     // Poll /status/<id> until done
     const pollInterval = setInterval(async function() {
         try {
-            const res = await fetch('/status/' + submissionId);
+            const res = await fetch(scriptName + '/status/' + submissionId);
             const data = await res.json();
 
             if (data.status === 'pending') {
