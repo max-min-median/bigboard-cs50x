@@ -38,7 +38,7 @@ extern const unsigned int N __attribute__((weak));
 
 #define SIZE(suf) size##suf();
 
-#define UNLOAD(suf) unloaded = unload##suf();
+#define UNLOAD(suf) unloaded = unload##suf(); clear_table##suf();
 
 // Define useful macros
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -287,7 +287,6 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     // Unload dictionary
     bool unloaded;
     TIME(unload, , UNLOAD)
-    clear_table();
     
     // Abort if dictionary not unloaded
     if (!unloaded) {
@@ -303,12 +302,11 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     // Time rest of loads and unloads
     for (int i = 1; i < iters; i++) {
         TIME(load, , LOAD)
-        TIME(load, _BENCH, LOAD)
         // TODO: add check to prevent cheating?
         TIME(size, , SIZE)
-        TIME(size, _BENCH, SIZE)
         TIME(unload, , UNLOAD)
-        clear_table();
+        TIME(load, _BENCH, LOAD)
+        TIME(size, _BENCH, SIZE)
         TIME(unload, _BENCH, UNLOAD)
     }
     
