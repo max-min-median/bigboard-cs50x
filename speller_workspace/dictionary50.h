@@ -15,5 +15,6 @@ unsigned int hash_BENCH(const char *word);
 bool load_BENCH(const char *dictionary);
 unsigned int size_BENCH(void);
 bool unload_BENCH(void);
+void clear_table_BENCH(void);
 
 #endif // DICTIONARY50_H

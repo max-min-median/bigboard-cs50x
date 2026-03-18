@@ -103,8 +103,12 @@ bool unload_BENCH(void)
         vacate_list_BENCH(n);
     }
 
-    // null out table[]
-    memset(table, 0, N * sizeof *table);
 
     return true;
+}
+
+void clear_table_BENCH(void)
+{
+    // null out table[]
+    memset(table, 0, N * sizeof *table);
 }
