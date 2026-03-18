@@ -3,13 +3,14 @@
 {% block main %}
 
     <div class="container py-5 text-center" id="registration-form">
-        <form action="/register" method="post">
+        <form action="{{ url_for('main.register') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Username field -->
             <div class="mb-3">
-                <input class="form-control mx-auto w-auto" id="username" autocomplete="off" autofocus name="username" placeholder="Username" type="text" required>
+                <input class="form-control mx-auto w-auto" id="username" autocomplete="off" autofocus name="username" placeholder="Username" type="text" value="{{ username or '' }}" required>
                 <div id="username-whitespace-warning" class="text-danger small mt-1" style="display: none;">
-                    ⚠️ Note: Extra spaces at the beginning or end in the username will be removed.
+                    ⚠️ Extra spaces at the beginning or end in the username will be removed.
                 </div>
             </div>
 
@@ -17,7 +18,7 @@
             <div class="mb-3">
                 <input class="form-control mx-auto w-auto" id="password" autocomplete="off" name="password" placeholder="Password" type="password" required>
                 <div id="password-whitespace-warning" class="text-danger small mt-1" style="display: none;">
-                    ⚠️ Password starts or ends with one or more spaces. Is this intentional?
+                    ⚠️ Password starts or ends with one or more spaces.
                 </div>
             </div>
 
@@ -25,73 +26,18 @@
             <div class="mb-3">
                 <input class="form-control mx-auto w-auto" id="confirmation" autocomplete="off" name="confirmation" placeholder="Password Again" type="password" required>
                 <div id="password-match-warning" class="text-danger small mt-1" style="display: none;">
-                    ❌ Password and confirmation must match, please try again!
+                    Password and confirmation must match
                 </div>
             </div>
 
             <!-- Submit button -->
             <button type="submit">Register</button>
 
+            {% if error %}
+            <div id="registration-error" class="text-danger small mt-3">{{ error }}</div>
+            {% endif %}
+
         </form>
     </div>
-
-    <script>
-
-        function validateWhitespace(inputEl, warningEl) {
-            const val = inputEl.value;
-            const hasSpace = val.length > 0 && (val.startsWith(' ') || val.endsWith(' '));
-
-            if (hasSpace) {
-                warningEl.style.display = 'block';
-            } else {
-                warningEl.style.display = 'none';
-            }
-        }
-
-        // Warn user about username input containing leading or trailing whitespaces
-        const usernameInput = document.querySelector('#username');
-        const usernameWarning = document.querySelector('#username-whitespace-warning');
-
-        usernameInput.addEventListener('input', function () {
-            validateWhitespace(usernameInput, usernameWarning);
-        });
-
-        // Warn user about password containing leading or trailing whitespaces
-        const passwordInput = document.querySelector('#password');
-        const passwordWarning = document.querySelector('#password-whitespace-warning');
-
-        passwordInput.addEventListener('input', function () {
-            validateWhitespace(passwordInput, passwordWarning);
-        });
-
-        // Warn user about password and confirmation not matching
-        const confirmationInput = document.querySelector('#confirmation');
-        const matchWarning = document.querySelector('#password-match-warning');
-        const registrationForm = document.querySelector('#registration-form');
-
-        function checkMatch() {
-            const p = passwordInput.value;
-            const c = confirmationInput.value;
-
-            if (c.length > 0 && p !== c) {
-                matchWarning.style.display = 'block';
-                return false;
-            } else {
-                matchWarning.style.display = 'none';
-                return true;
-            }
-        }
-
-        passwordInput.addEventListener('input', checkMatch);
-        confirmationInput.addEventListener('input', checkMatch);
-
-        registrationForm.addEventListener('submit', function(event) {
-            if (!checkMatch()) {
-                event.preventDefault();
-                alert('Please fix the error before submitting!');
-            }
-        })
-
-    </script>
 
 {% endblock %}

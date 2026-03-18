@@ -3,22 +3,20 @@
 {% block main %}
 
     <div class="container py-5 text-center">
-        <form action="/login" method="post">
-
-            <!-- Username field -->
+        <form action="{{ url_for('main.login') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="username" placeholder="Username" type="text" required>
             </div>
-
-            <!-- Password field -->
             <div class="mb-3">
                 <input autocomplete="off" class="form-control mx-auto w-auto" name="password" placeholder="Password" type="password" required>
             </div>
-
-            <!-- Submit button -->
             <button type="submit">Log In</button>
-
         </form>
+
+        {% if error %}
+            <div id="registration-error" class="text-danger small mt-3">{{ error }}</div>
+        {% endif %}
     </div>
 
 {% endblock %}

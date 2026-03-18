@@ -54,9 +54,9 @@ saveLabelBtns.forEach(btn => {
         const newLabel = labelInput.value.trim();
 
         try {
-            const res = await fetch(`/submission/${id}/label`, {
+            const res = await fetch(`${scriptName}/submission/${id}/label`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ label: newLabel })
             });
             if (!res.ok) throw new Error();
@@ -86,11 +86,12 @@ labelInputs.forEach(input => {
 // Delete: remove submission row from db
 deleteBtns.forEach(btn => {
     btn.addEventListener('click', async () => {
-        if (!confirm('Delete this submission?')) return;
+        if (!confirm('Permanently delete this submission?')) return;
 
         const id = btn.dataset.id;
         try {
-            const res = await fetch(`/submission/${id}/delete`, { method: 'POST' });
+            const res = await fetch(
+                `${scriptName}/submission/${id}/delete`, { method: 'POST', headers: { 'X-CSRFToken': csrfToken } });
             if (!res.ok) throw new Error();
             // Note: the table rows don't get renumbered, I don't think we need to overcomplicate things
             const data = await res.json();

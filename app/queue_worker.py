@@ -4,7 +4,7 @@ import uuid
 from time import time_ns
 
 from .benchmark import benchmark_submission
-from .config import SUBMISSIONS_MAX_PER_USER
+from .config import SUBMISSIONS_MAX_PER_USER, SUBMISSIONS_QUEUE_LIMIT_PER_USER, QUEUE_CLEANUP_INTERVAL_SEC
 from .models import QueueItem, Submission, User, db
 
 log = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ _all: dict[str, QueueItem] = {}
 _lock = threading.Lock()
 _wake_worker_event = threading.Event()
 _app = None
+_last_cleanup = time_ns()
 
 
 def enqueue(code: str, header: str, user_id: int) -> QueueItem:
@@ -32,6 +33,8 @@ def enqueue(code: str, header: str, user_id: int) -> QueueItem:
         header=header
     )
     with _lock:
+        if time_ns() - _last_cleanup > QUEUE_CLEANUP_INTERVAL_SEC * 10**9:
+            _cleanup()
         _pending.append(item)
         _all[item.submission_id] = item
     _wake_worker_event.set()
@@ -60,36 +63,52 @@ def get_status(submission_id: str) -> dict | None:
             return {"status": item.status, "output": item.output}
 
 
+def queue_limit_reached(user_id: int) -> bool:
+    """Check whether number of submissions a user currently has in the queue exceeds limit."""
+    with _lock:
+        user_submissions = sum(item.user_id == user_id for item in _pending)
+        return user_submissions >= SUBMISSIONS_QUEUE_LIMIT_PER_USER
+
+
 def queue_length() -> int:
     with _lock:
         return len(_pending)
 
 
+def _cleanup() -> None:
+    """Remove stale QueueItems from _all kept for status polling reasons. Call within _lock"""
+    global _all, _last_cleanup
+    initial_count = len(_all)
+    cutoff = time_ns() - QUEUE_CLEANUP_INTERVAL_SEC * 10**9
+    _all = { sid: item for sid, item in _all.items() if item.timestamp > cutoff }
+    _last_cleanup = time_ns()
+    log.debug("Queue cleanup ran, %d items remaining, %d removed", len(_all), initial_count - len(_all))
+
+
 def _save_submission(item: QueueItem, results: dict[str, float]) -> None:
     """Save a completed benchmark to the database, increment the user's submission counter,
     and enforce the per-user submission cap by deleting their worst result if needed."""
-    user = User.query.get(item.user_id)
+    user = db.session.get(User, item.user_id)
     user.total_submissions += 1
 
     # Enforce cap: delete worst submission if at the limit
-    existing = (
-        Submission.query
+    existing = db.session.scalars(
+        db.select(Submission)
         .filter_by(user_id=item.user_id)
         .order_by(Submission.total_average.desc())
-        .all()
-    )
+    ).all()
     if len(existing) >= SUBMISSIONS_MAX_PER_USER:
-        db.session.delete(existing[0])
+        db.session.delete(existing[-1])
 
-    submission = Submission(
-        submission_id=item.submission_id,
-        user_id=item.user_id,
-        **results
-    )
-    db.session.add(submission)
-    db.session.commit()
-    log.info("Saved submission %s for user %d (lifetime total: %d)",
-             item.submission_id, item.user_id, user.total_submissions)
+    submission = Submission(submission_id=item.submission_id, user_id=item.user_id, **results)
+    try:
+        db.session.add(submission)
+        db.session.commit()
+        log.info("Saved submission %s for user %d (lifetime total: %d)",
+            item.submission_id, item.user_id, user.total_submissions)
+    except Exception as e:
+        db.session.rollback()
+        log.exception(e)
 
 
 def _process_item(item: QueueItem) -> None:
@@ -105,6 +124,8 @@ def _process_item(item: QueueItem) -> None:
         with _lock:
             item.output = result.output
             item.status = result.status
+            item.code = ""
+            item.header = ""
             if item in _pending:
                 _pending.remove(item)
 

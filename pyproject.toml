@@ -14,15 +14,14 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "SQLAlchemy>=2.0.47",
     "psycopg2-binary",
-    "flask-session>=0.8.0",
     "flask-login>=0.6.3",
     "werkzeug>=3.1.6",
-    "flask-assets>=2.1.0"
+    "flask-assets>=2.1.0",
+    "flask-wtf>=1.2.2",
 ]
 
 [dependency-groups]
-dev = [
-]
+prod = ["gunicorn>=25.1.0"]
 
 [tool.setuptools]
 packages = ["app"]

@@ -22,7 +22,7 @@ class QueueItem:
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(24), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
 
     total_submissions = db.Column(db.Integer, nullable=False, default=0)

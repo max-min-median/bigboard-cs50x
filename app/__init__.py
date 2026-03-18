@@ -4,12 +4,11 @@ from logging.handlers import RotatingFileHandler
 
 import colorlog
 from flask import Flask, jsonify, redirect, request, url_for
-from flask_login import LoginManager
-
 from flask_assets import Bundle, Environment
-from flask_session import Session
+from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 
-from .config import BASE_DIR, DATABASE_URL, MAX_CONTENT_LENGTH, SECRET_KEY
+from .config import *
 from .container import spin_container
 from .models import User, db
 from .queue_worker import start_queue_worker
@@ -21,42 +20,15 @@ def create_app() -> Flask:
     log = logging.getLogger(__name__)
 
     app = Flask(__name__)
-
     app.config["SECRET_KEY"] = SECRET_KEY
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
-    login_manager = LoginManager()
-    login_manager.login_view = "main.login"
-    login_manager.init_app(app)
+    CSRFProtect(app)
+    init_login_manager(app)
+    # config for flask-assets to handle serving .css and .js
+    init_static_bundling(app)
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-
-    @login_manager.unauthorized_handler
-    def unauthorized():
-        if request.is_json or request.path == url_for("main.submit"):
-            return jsonify({"error": "Authentication failed, please log in."}), 401
-        return redirect(url_for("main.login"))
-
-    # Configure session
-    app.config["SESSION_PERMANENT"] = False
-    app.config["SESSION_TYPE"] = "filesystem"
-    Session(app)
-
-    # Bundle .js and .css files together using flask-assets library to reduce server requests
-    # To enable minification, install cssmin and rjsmin (pip install cssmin rjsmin) and use:
-    # assets.register("css_bundled", Bundle(*css_files, filters="cssmin", output="bundled/all.css"))
-    # assets.register("js_bundled", Bundle(*js_files, filters="rjsmin", output="bundled/all.js"))
-    static_dir = BASE_DIR / "app" / "static"
-    css_files = [f.name for f in static_dir.glob("*.css")]
-    js_files = [f.name for f in static_dir.glob("*.js")]
-    assets = Environment(app)
-    assets.register("css_bundled", Bundle(*css_files, output="bundled/all.css"))
-    assets.register("js_bundled", Bundle(*js_files, output="bundled/all.js"))
-
-    # 
     db.init_app(app)
     with app.app_context():
         db.create_all()
@@ -64,20 +36,58 @@ def create_app() -> Flask:
     app.register_blueprint(main)
 
     # compiles the benchmark executable and creates some necessary symlinks
-    result = spin_container(
-        speller_perms="rw", mount_workspace=True, flags=["--initialize"]
-    )
+    result = spin_container(speller_perms="rw", mount_workspace=True, flags=["--initialize"])
     log.info(result.stdout + result.stderr)
     if result.returncode != 0:
         log.error("Error while spinning up container during app initialization")
         sys.exit(1)
 
     start_queue_worker(app)
-
     return app
 
 
+def init_login_manager(app: Flask) -> None:
+    login_manager = LoginManager()
+    login_manager.login_view = "main.login"
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.get(User, user_id)
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        if request.is_json:
+            return jsonify({"error": "Authentication failed, please log in."}), 401
+        return redirect(url_for("main.login"))
+
+
+def init_static_bundling(app: Flask) -> None:
+    """ 
+    Bundle .js and .css together into single files using flask-assets library to reduce server requests
+    # To enable minification, install cssmin and rjsmin (pip install cssmin rjsmin) and use:
+    # assets.register("css_bundled", Bundle(*css_files, filters="cssmin", output="bundled/all.css"))
+    # assets.register("js_bundled", Bundle(*js_files, filters="rjsmin", output="bundled/all.js"))
+    """
+    static_dir = BASE_DIR / "app" / "static"
+    css_files = [f.name for f in static_dir.glob("*.css")]
+    js_files = [f.name for f in static_dir.glob("*.js")]
+    assets = Environment(app)
+    assets.register("css_bundled", Bundle(*css_files, output="bundled/all.css"))
+    assets.register("js_bundled", Bundle(*js_files, output="bundled/all.js"))    
+
+
 def setup_logging() -> None:
+    class FilterPolling(logging.Filter):
+        """
+        the /status route is very spammy since webpage checks submission status at quick intervals
+        this just filters out /status request logs completely
+        """
+        def filter(self, record):
+            return "GET /status/" not in record.getMessage()
+    if DISABLE_STATUS_ROUTE_LOGS:
+        logging.getLogger('werkzeug').addFilter(FilterPolling())
+
     # Colored console handler
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
