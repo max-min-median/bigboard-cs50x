@@ -144,7 +144,7 @@ static int prog_main(int argc, char *argv[]) {
     return 0;
 }
 
-void print_texttime(char *filename, texttime tm) {
+static void print_texttime(char *filename, texttime tm) {
     // [OUT:signature]misspellings, n, words, l, c, s, u, total, l_min, c_min, s_min, u_min, total_min[signature]
     printf("[%s%s%s]%i, %i, %i, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f\n",
         filename,
@@ -155,7 +155,7 @@ void print_texttime(char *filename, texttime tm) {
     );
 }
 
-void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH) {
+static void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH) {
     struct stat sb;
 
     if (stat(textpath, &sb) != 0) {
@@ -185,7 +185,7 @@ void check_textpath(char *textpath, texttime *total_tm, texttime *total_tm_BENCH
     }
 }
 
-void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
+static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
     // Structures for timing data
     struct timespec tm_start, tm_end, tp_start, tp_end;
 
@@ -332,7 +332,7 @@ void check_text(char *filename, texttime *total_tm, texttime *total_tm_BENCH) {
 }
 
 // Clears student's `table[N]`, if it exists
-void clear_table() {
+static void clear_table() {
     if (&table) memset(table, 0, N * sizeof *table);
 }
 
