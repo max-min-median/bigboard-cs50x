@@ -34,16 +34,16 @@
             <tr id="row-{{ submission.id }}">
                 <td>{{ loop.index }}</td>
                 <td><span class="local-date" data-timestamp="{{ submission.timestamp }}"></span></td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.total_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.total_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.load_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.load_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.check_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.check_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.unload_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.unload_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.size_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.size_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_minimum) }}×</td>
                 <td class="py-0">
                     <button class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ submission.id }}">Delete</button>
                 </td>

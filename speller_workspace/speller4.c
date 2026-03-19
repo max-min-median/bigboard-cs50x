@@ -38,7 +38,7 @@ extern const unsigned int N __attribute__((weak));
 
 #define SIZE(suf) size##suf();
 
-#define UNLOAD(suf) unloaded = unload##suf(); clear_table##suf();
+#define UNLOAD(suf) unloaded = unload##suf();
 
 // Define useful macros
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -283,7 +283,11 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
 
     // Close text
     fclose(file);
-    
+
+    // Time size once, because by this time we've not taken its timing
+    TIME(size, , SIZE)
+    TIME(size, _BENCH, SIZE)    
+
     // Unload dictionary
     bool unloaded;
     TIME(unload, , UNLOAD)
@@ -294,17 +298,19 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
         exit(1);
     }
     TIME(unload, _BENCH, UNLOAD)
-    
-    // Time size once, because by this time we've not taken its timing
-    TIME(size, , SIZE)
-    TIME(size, _BENCH, SIZE)
+
+    // clear_table may not always work, so as a fallback we will use iters=1, but execute speller4 many times.
+    // This will leave the OS to do the cleaning up between successive executions.
     
     // Time rest of loads and unloads
     for (int i = 1; i < iters; i++) {
+        clear_table();
         TIME(load, , LOAD)
         // TODO: add check to prevent cheating?
         TIME(size, , SIZE)
         TIME(unload, , UNLOAD)
+
+        clear_table_BENCH();
         TIME(load, _BENCH, LOAD)
         TIME(size, _BENCH, SIZE)
         TIME(unload, _BENCH, UNLOAD)
