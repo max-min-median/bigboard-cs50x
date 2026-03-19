@@ -45,16 +45,16 @@
             <tr>
                 <td>{{ (pagination.page - 1) * per_page + loop.index }}</td>
                 <td>{{ submission.user.username }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.total_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.total_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.load_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.load_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.check_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.check_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.unload_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.unload_minimum) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.size_average) }}</td>
-                <td class="bench-cell">{{ "%.3f"|format(submission.size_minimum) }}</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.total_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.load_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.check_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.unload_minimum) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_average) }}×</td>
+                <td class="bench-cell">{{ "%.3f"|format(submission.size_minimum) }}×</td>
             </tr>
             {% endfor %}
         </tbody>
