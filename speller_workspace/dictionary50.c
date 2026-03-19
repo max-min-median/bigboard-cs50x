@@ -102,8 +102,6 @@ bool unload_BENCH(void)
         node *n = table[i];
         vacate_list_BENCH(n);
     }
-
-
     return true;
 }
 
