@@ -162,7 +162,6 @@ static void check_textpath(char *textpath, texttime *total_tm, texttime *total_t
         fprintf(stderr, "[ERROR] Invalid path: %s", textpath);
         exit(1);
     }
-
     if (S_ISREG(sb.st_mode)) {
         if (strcmp(textpath + strlen(textpath) - 4, ".txt") == 0) {
             check_text(textpath, total_tm, total_tm_BENCH);
@@ -173,13 +172,11 @@ static void check_textpath(char *textpath, texttime *total_tm, texttime *total_t
             fprintf(stderr, "[ERROR] Unable to open folder %s", textpath);
             exit(1);
         }
-
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
             if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
             char newpath[strlen(textpath) + strlen(entry->d_name) + 2];
             snprintf(newpath, sizeof(newpath), "%s/%s", textpath, entry->d_name);
-
             check_textpath(newpath, total_tm, total_tm_BENCH);
         }
     }
@@ -195,7 +192,7 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
     // In the event student uses a global accumulator for size(), repeated calls to load() may not first reset this to 0.
     // Thus, take note of the dictionary size immediately after the first load().
     int prev_dict_size = size(), prev_dict_size_BENCH = size_BENCH();
-    
+
     // Load dictionary
     bool loaded;
     TIME(load,, LOAD)
@@ -268,7 +265,7 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
         unload();
         exit(1);
     }
-    
+
     // Spellcheck entire text in one go (for greater timing accuracy)
     for (int k = 0; k < iters; k++) {
         TIME(check, , CHECK)
@@ -280,7 +277,6 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
             exit(1);
         }
     }
-
     // Close text
     fclose(file);
 
@@ -291,7 +287,7 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
     // Unload dictionary
     bool unloaded;
     TIME(unload, , UNLOAD)
-    
+
     // Abort if dictionary not unloaded
     if (!unloaded) {
         fprintf(stderr, "[ERROR] Could not unload %s.\n", dictionary);
@@ -301,21 +297,22 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
 
     // clear_table may not always work, so as a fallback we will use iters=1, but execute speller4 many times.
     // This will leave the OS to do the cleaning up between successive executions.
-    
+    clear_table();
+    clear_table_BENCH();
+
     // Time rest of loads and unloads
     for (int i = 1; i < iters; i++) {
-        clear_table();
         TIME(load, , LOAD)
         // TODO: add check to prevent cheating?
         TIME(size, , SIZE)
         TIME(unload, , UNLOAD)
+        clear_table();
 
-        clear_table_BENCH();
         TIME(load, _BENCH, LOAD)
         TIME(size, _BENCH, SIZE)
         TIME(unload, _BENCH, UNLOAD)
+        clear_table_BENCH();
     }
-    
     // Success
     free(allwords);
     free(wordlen_plus1);
@@ -334,7 +331,6 @@ static void check_text(char *filename, texttime *total_tm, texttime *total_tm_BE
     total_tm##bench->category##_min += tm##bench.category##_min
     FOR_LOAD_CHECK_SIZE_UNLOAD(ADD_TO_TOTAL, )
     FOR_LOAD_CHECK_SIZE_UNLOAD(ADD_TO_TOTAL, _BENCH)
-
 }
 
 // Clears student's `table[N]`, if it exists
