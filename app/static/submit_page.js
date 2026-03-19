@@ -118,9 +118,7 @@ dividerDiv.addEventListener('mousedown', function(e) {
 submitForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    submitBtn.disabled = true;
-    codeInput.disabled = true;
-    headerInput.disabled = true;
+    [submitBtn, codeInput, headerInput].forEach(x => x.disabled = true)
     outputDiv.textContent = 'Submitting...';
 
     let submissionId = null;
@@ -141,9 +139,7 @@ submitForm.addEventListener('submit', async function(e) {
         submissionId = data.submission_id;
     } catch (err) {
         outputDiv.textContent = 'Error: ' + err.message;
-        submitBtn.disabled = false; // TODO group these lines together in a function, repeated a bunch
-        codeInput.disabled = false;
-        headerInput.disabled = false;
+        [submitBtn, codeInput, headerInput].forEach(x => x.disabled = false)
         return;
     }
 
@@ -162,16 +158,12 @@ submitForm.addEventListener('submit', async function(e) {
             } else if (data.status === 'done' || data.status === 'error') {
                 clearInterval(pollInterval);
                 outputDiv.textContent = data.output;
-                submitBtn.disabled = false;
-                codeInput.disabled = false;
-                headerInput.disabled = false;
+                [submitBtn, codeInput, headerInput].forEach(x => x.disabled = false)
             }
         } catch (err) {
             clearInterval(pollInterval);
             outputDiv.textContent = 'Error: could not reach server.';
-            submitBtn.disabled = false;
-            codeInput.disabled = false;
-            headerInput.disabled = false;
+            [submitBtn, codeInput, headerInput].forEach(x => x.disabled = false)
         }
     }, parseInt(submitBtn.dataset.pollInterval, 10));
 });
