@@ -17,7 +17,7 @@ _app = None
 _last_cleanup = time_ns()
 
 
-def enqueue(code: str, header: str, user_id: int) -> QueueItem:
+def enqueue(user_id: int, data: dict) -> QueueItem:
     """
     Add a new submission to queue, generating a uuid for it, storing its timestamp, 
     and contents of dictionary.c and dictionary.h. If student checked box to use distribution 
@@ -29,8 +29,7 @@ def enqueue(code: str, header: str, user_id: int) -> QueueItem:
         user_id=user_id,
         submission_id=str(uuid.uuid4()),
         timestamp=time_ns(),
-        code=code,
-        header=header
+        **data,
     )
     with _lock:
         if time_ns() - _last_cleanup > QUEUE_CLEANUP_INTERVAL_SEC * 10**9:

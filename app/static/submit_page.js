@@ -7,6 +7,7 @@ const codeInput = document.getElementById('code-input');
 const outputDiv = document.getElementById('output');
 const submitBtn = document.getElementById('submit-btn');
 const useDistCheckbox = document.getElementById('use-dist-checkbox');
+const compatibilityMode = document.getElementById('compatibility-mode-checkbox');
 const headerGroup = document.getElementById('header-group');
 const headerInput = document.getElementById('header-input');
 const dividerDiv = document.getElementById('textarea-divider');
@@ -129,7 +130,8 @@ submitForm.addEventListener('submit', async function(e) {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({
                 code: codeInput.value,
-                header: useDistCheckbox.checked ? '' : headerInput.value
+                header: useDistCheckbox.checked ? '' : headerInput.value,
+                compatibility: compatibilityMode.checked,
             })
         });
         const data = await response.json();

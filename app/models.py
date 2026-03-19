@@ -15,6 +15,7 @@ class QueueItem:
     timestamp: int              # Unix timestamp
     code: str                   # contents of submission's dictionary.c
     header: str                 # contents of submission's dictionary.h (blank if using distribution)
+    compatibility: bool         # if true, runs the speller executable multiple times.
     status: str = "pending"     # pending | running | done | error
     output: str = ""            # output for webpage's "terminal"
 

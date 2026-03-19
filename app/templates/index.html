@@ -3,13 +3,16 @@
 {% block main %}
 
     <div id="submit-page-container">
-        <div id="use-dist-container">
+        <div id="checkboxes-container">
             <label id="use-dist-label">
                 <input type="checkbox" id="use-dist-checkbox" autocomplete="off" checked>
-                Use distribution <code>dictionary.h</code>
+                <div>Use distribution <code>dictionary.h</code></div>
+            </label>
+            <label id="compatibility-mode-label">
+                <input type="checkbox" id="compatibility-mode-checkbox" autocomplete="off" unchecked>
+                Compatibility mode
             </label>
         </div>
-
         <form id="submit-form">
             <div id="textareas-container">
                 <div class="textarea-group">

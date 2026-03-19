@@ -1,12 +1,15 @@
-#use-dist-container {
-    display: flex;
-    justify-content: flex-end;
+#checkboxes-container {
+    width: max-content;
+    margin-left: auto;
+    display: grid;
+    margin-bottom: 5px;
 }
 
-#submit-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+#checkboxes-container label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 8px;
+    align-items: center;
 }
 
 #submit-page-container {
@@ -21,6 +24,7 @@
     min-height: 150px;
     resize: vertical;
     overflow: hidden;
+    margin-bottom: 8px;
 }
 
 #textarea-divider {
