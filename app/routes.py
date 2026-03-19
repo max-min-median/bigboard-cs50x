@@ -138,10 +138,8 @@ def submit() -> Response | tuple[Response, int]:
     if not data or "code" not in data:
         return jsonify({"error": "No code received."}), 400
 
-    code = data["code"]
-    header = data.get("header", "")
     try:
-        item = queue_worker.enqueue(user_id=current_user.id, code=code, header=header)
+        item = queue_worker.enqueue(current_user.id, data)
         return jsonify({"submission_id": item.submission_id})
     except Exception as e:
         log.exception(e)
